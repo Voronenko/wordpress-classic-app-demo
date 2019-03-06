@@ -1,0 +1,53 @@
+---
+- hosts: web
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{playbook_dir}}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+    - project_phars:
+        - {
+          tool: "wp"
+#          extra_phar_params: " --require=/opt/wordpress/dictator/dictator.php"
+        }
+
+  vars_files:
+    - common_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+
+    - name: ANSIBLE PYTHON | install python 2
+      raw: test -e /usr/bin/python || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags:
+        - create
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags:
+        - create
+
+    - name: gather facts
+      setup:
+      tags:
+        - always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      tags: always
+
+  roles:
+
+       - {
+          role: "sa-php-pharables",
+          phars: "{{project_phars}}",
+          tags: [create, php7]
+         }
+
+  tasks:
+    - include_tasks: "components/application.yml"
+      tags: 
+        - always
+        - update

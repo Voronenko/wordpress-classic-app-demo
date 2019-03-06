@@ -1,0 +1,95 @@
+server {
+  listen 80;
+  listen [::]:80;
+  server_name www.{{ application_domain }};
+  return 301 https://{{application_domain}}$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+
+  server_name {{ application_domain }};
+
+  ssl on;
+  ssl_certificate {{ssl_install_path}}/{{ssl_cert_name}}.crt;
+  ssl_certificate_key {{ssl_install_path}}/{{ssl_key_name}}.key;
+  ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+  ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
+  ssl_prefer_server_ciphers on;
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout  10m;
+  ssl_dhparam {{ssl_install_path}}/dhparam.pem;
+
+  root {{ application_web_root_dir }};
+  index index.php;
+
+  #  WP BLOCK
+
+    location = /favicon.ico {
+    	log_not_found off;
+    	access_log off;
+    }
+
+    location = /robots.txt {
+    	allow all;
+    	log_not_found off;
+    	access_log off;
+    }
+
+    # Deny all attempts to access hidden files such as .htaccess, .htpasswd, .DS_Store (Mac).
+    # Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+    location ~ /\. {
+    	deny all;
+    }
+
+    # Deny access to any files with a .php extension in the uploads directory
+    # Works in sub-directory installs and also in multisite network
+    # Keep logging the requests to parse later (or to pass to firewall utilities such as fail2ban)
+    location ~* /(?:uploads|files)/.*\.php$ {
+    	deny all;
+    }
+
+  #  /WP BLOCK
+
+  location / {
+    try_files $uri $uri/ /index.php?q=$uri&$args;
+  }
+
+  {% if application_type is not defined or application_type != "classic" %}
+
+  rewrite /wp-admin$ $scheme://$host$uri/ last;
+  rewrite ^/(wp-.*.php)$ /wp/$1 last;
+  rewrite ^/(wp-(content|admin|includes).*) /wp/$1 last;
+
+  {% endif %}
+
+  error_page 404 /404.html;
+
+  error_page 500 502 503 504 /50x.html;
+  location = /50x.html {
+    root /usr/share/nginx/html;
+  }
+
+  location ~ \.php$ {
+    try_files $uri =404;
+    fastcgi_split_path_info ^(.+\.php)(/.+)$;
+    fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+    fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;
+  }
+
+  # BEGIN W3TC Browser Cache
+  gzip on;
+  gzip_disable "msie6";
+
+  gzip_vary on;
+  gzip_proxied any;
+  gzip_comp_level 6;
+  gzip_buffers 16 8k;
+  gzip_http_version 1.1;
+  gzip_types text/css text/x-component application/x-javascript application/javascript text/javascript text/x-js text/richtext image/svg+xml text/plain text/xsd text/xsl text/xml image/bmp application/java application/msword application/vnd.ms-fontobject application/x-msdownload image/x-icon image/webp application/json application/vnd.ms-access application/vnd.ms-project application/x-font-otf application/vnd.ms-opentype application/vnd.oasis.opendocument.database application/vnd.oasis.opendocument.chart application/vnd.oasis.opendocument.formula application/vnd.oasis.opendocument.graphics application/vnd.oasis.opendocument.spreadsheet application/vnd.oasis.opendocument.text audio/ogg application/pdf application/vnd.ms-powerpoint application/x-shockwave-flash image/tiff application/x-font-ttf audio/wav application/vnd.ms-write application/font-woff application/font-woff2 application/vnd.ms-excel;
+  # END W3TC Browser Cache
+
+}

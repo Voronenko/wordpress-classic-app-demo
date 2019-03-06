@@ -1,0 +1,176 @@
+---
+
+  - name: Application | Ensure target directories present
+    file: path="{{application_base_dir}}" state="directory" owner="{{deploy_user}}" group="www-data" mode="u=rwx,g=rwx,o="
+    become: yes
+    tags:
+      - application
+      - update
+
+  - name: Application | Generate dhparam.pem if needed
+    command: "openssl dhparam -out {{ssl_install_path}}/dhparam.pem 2048"
+    args:
+      creates: "{{ssl_install_path}}/dhparam.pem"
+    when: application_protocol_scheme == "https"
+    become: yes
+    tags:
+      - application
+
+
+  - name: Application | dependencies
+    apt: pkg="{{item}}" state="present"
+    with_items: "{{application_dependencies | default([])}}"
+    become: yes
+    tags:
+      - application
+      - update
+
+#  - name: Application | Push-deploy application to the target server
+#    unarchive: src="{{root_dir}}/{{artifact_name}}" dest="{{application_base_dir}}" owner="{{deploy_user}}" group="www-data"
+#    become: yes
+#    tags:
+#      - application
+#      - update
+
+  - name: Application | Template nginx config
+    template: src="{{root_dir}}/templates/nginx/wordpress_{{application_protocol_scheme}}.conf.j2" dest="/etc/nginx/sites-enabled/{{application_domain}}.conf"
+    become: yes
+    tags:
+      - application
+      - update
+
+  - name: Application | Template environment file
+    template: src="{{root_dir}}/templates/wordpress/env.j2" dest="{{application_base_dir}}/.env" owner="{{deploy_user}}" group="www-data" mode="u=rw,g=r,o="
+    when: application_type == "composer"
+    become: yes
+    tags:
+      - application
+      - update
+
+  - name: Application | Template wp-config
+    template: src="{{root_dir}}/templates/wordpress/wp-config.php.j2" dest="{{application_base_dir}}/wp-config.php" owner="{{deploy_user}}" group="www-data" mode="u=rw,g=r,o="
+    when: application_type == "classic"
+    become: yes
+    tags:
+      - application
+      - update
+
+  - block:
+
+    - name: Application | Check wordpress installed
+      command: test -e {{application_base_dir}}/wp-includes/version.php
+      ignore_errors: true
+      register: wp_present
+      tags:
+        - application
+        - update
+
+
+    - name: Download wordpress
+      shell: "{{wp_cli}} core download --version={{application_default_wp_version}}"
+      args:
+        chdir: "{{application_base_dir}}"
+      when: wp_present is failed
+      become: yes
+      become_user: "{{deploy_user}}"
+      tags:
+        - application
+        - update
+
+    - name: Initial install
+      shell: "{{wp_cli}} core install --title={{application_default_wp_title}}  --url={{application_domain}} --admin_user=admin --admin_email={{application_admin_email}} --admin_password={{application_admin_pass}}"
+      args:
+        chdir: "{{application_base_dir}}"
+      when: wp_present is failed
+      become: yes
+      become_user: "{{deploy_user}}"
+      tags:
+        - application
+        - update
+
+    - name: Initial plugins
+      shell: "{{wp_cli}} plugin install {{item}} --activate"
+      args:
+        chdir: "{{application_base_dir}}"
+      with_items: "{{application_default_wp_plugins | default([])}}"
+      when: wp_present is failed
+      become: yes
+      become_user: "{{deploy_user}}"
+      tags:
+        - application
+        - update
+    when: application_type == "classic"
+
+
+  # - name: Provide dictator state
+  #   copy: src="{{root_dir}}/files/dictator-site-state-{{env}}.yml"  dest="{{application_base_dir}}/dictator-site-state-{{env}}.yml" owner="{{deploy_user}}"
+  #   become: yes
+  #   become_user: "{{deploy_user}}"
+  #   tags:
+  #     - application
+  #     - update
+
+
+  - name: Application | chown -R {{deploy_user}}:www-data  .
+    shell: "chown -R {{deploy_user}}:www-data  ."
+    args:
+      chdir: "{{application_base_dir}}"
+    become: yes
+    tags:
+      - application
+      - update
+
+
+  - name: Application | find . -type d -exec chmod u=rwx,g=rx,o=rx '{}' \;
+    shell: find . -type d -exec chmod u=rwx,g=rx,o= '{}' \;
+    args:
+      chdir: "{{application_base_dir}}"
+    become: yes
+    tags:
+      - application
+      - update
+
+
+  - name: Application | find . -type d -exec chmod u=rwx,g=rx,o=r '{}' \;
+    shell: find . -type f -exec chmod u=rw,g=r,o= '{}' \;
+    args:
+      chdir: "{{application_base_dir}}"
+    become: yes
+    tags:
+      - application
+      - update
+
+
+  - name: Application | Fix uploads permissions
+    file: dest="{{application_uploads_dir}}" owner="{{deploy_user}}" group=www-data mode="u=rwx,g=rwx" state="directory"
+    become: yes
+    tags:
+      - application
+      - update
+
+  - name: Application | Fix cache permissions
+    file: dest="{{application_cache_dir}}" owner="{{deploy_user}}" group=www-data mode="u=rwx,g=rwx" state="directory"
+    become: yes
+    tags:
+      - application
+      - update
+
+  - name: Application | Fix cache permissions
+    shell: setfacl -m g:www-data:rwx,d:g:www-data:rwx "{{application_cache_dir}}"
+    when: application_ftp_user is defined
+
+  - name: Application | Fix uploads permissions
+    shell: setfacl -m g:www-data:rwx,d:g:www-data:rwx "{{application_uploads_dir}}"
+    when: application_ftp_user is defined
+
+
+  - name: Application | allow ftp updates setfacl -Rm u:{{application_ftp_user}}:rwX,d:u:{{deploy_user}}:rwX,d:g:www-data:rx {{application_base_dir}}
+    shell: "setfacl -Rm u:{{application_ftp_user}}:rwX,d:u:{{deploy_user}}:rwX,d:g:www-data:rx {{application_base_dir}}"
+    when: application_ftp_user is defined
+
+  - name: Application | Restart webserver
+    service: name="nginx" state="restarted"
+    become: yes
+    tags:
+      - application
+      - update

@@ -1,0 +1,49 @@
+---
+- hosts: phphost
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+
+
+  vars_files:
+    - ./mysql_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+      tags: always
+
+    - name: ANSIBLE PYTHON | install python 2
+      raw: test -e /usr/bin/python || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags: always
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags: always
+
+    - name: gather facts
+      setup:
+      tags: always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      tags: always
+
+  roles:
+
+      - {
+          role: "sa-mysql",
+          tags: [create, mysql],
+          option_harden_mysql: true,
+          mysql_root_user: root,
+          mysql_root_password: "{{box_mysql_root_password}}",
+          mysql_databases: "{{box_mysql_databases | default([])}}",
+          mysql_users: "{{box_mysql_users | default([])}}",
+        }
+
+  tasks:
+
+    - debug: msg="Pre tasks section"

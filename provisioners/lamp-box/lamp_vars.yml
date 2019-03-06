@@ -1,0 +1,4 @@
+  php_pool_properties:
+    - {regexp: "^[;]?php_admin_value*memory_limit*", line: "php_admin_value[memory_limit] = 512M"}
+    - {regexp: "^[;]?php_admin_value*post_max_size*", line: "php_admin_value[post_max_size] = 30M"}
+    - {regexp: "^[;]?php_admin_value*upload_max_filesize*", line: "php_admin_value[upload_max_filesize] = 50M"}

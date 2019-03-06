@@ -1,0 +1,11 @@
+box_deploy_user: ubuntu
+
+option_enforce_ssh_keys_login: true
+option_ufw: true
+
+env_db_instance_id: "localhost"
+env_db_instance_address: "localhost"
+env_db_instance_port: "3306"
+env_db_user: "wordpress"
+env_db_password: "wordpress"
+env_db_name: "wordpress"

@@ -1,0 +1,16 @@
+app_primary_instance: true
+box_prometheus_exporters:
+#    - {
+#      name: apache
+#      }
+    - {
+      name: node
+      }
+#    - {
+#      name: memcached
+#      }
+#    - {
+#      name: phpfpm,
+#      exporter_user: "www-data",
+#      parameters: "--phpfpm.socket-paths /var/run/php/php7.0-fpm.sock"
+#      }

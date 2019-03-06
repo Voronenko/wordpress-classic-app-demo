@@ -1,0 +1,89 @@
+---
+- hosts: phphost
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+    - box_option_install_xdebug: false
+
+    - project_phars: []
+
+    - additional_php_extensions:
+        - php-memcached
+        - php7.0-mbstring
+        - php7.0-mcrypt
+        - php7.0-xml        
+
+  vars_files:
+    - ./lamp_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+      tags: always
+
+    - name: ANSIBLE PYTHON | install python 2
+      raw: test -e /usr/bin/python || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags: always
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags: always
+
+    - name: gather facts
+      setup:
+      tags: always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      tags: always
+
+  roles:
+
+#      - {
+#           role: "sa-apache",
+#           tags: [create, apache]
+#        }
+
+      - {
+           role: "sa-nginx",
+           tags: [create, nginx]
+        }
+
+      - {
+         role: "sa-php-fpm",
+         php_family: "7.0", # 5.6  | 7.0 | hhvm |  default
+         option_install_xdebug: "{{box_option_install_xdebug}}",
+         custom_pool_properties: "{{php_pool_properties}}",
+         php_extensions: "{{additional_php_extensions}}",
+         tags: [create, php, php70]
+        }
+
+  tasks:
+
+    - debug: msg="Pre tasks section"
+
+#    - name: Configure apache2 for php (a2enmod)
+#      shell: a2enmod actions fastcgi alias proxy_fcgi
+#      become: yes
+#
+#    - name: Configure apache2 for php (a2enconf)
+#      shell: a2enconf php7.0-fpm
+#      become: yes
+#
+#    - name: POC marker
+#      copy:
+#        dest: "/var/www/html/ii.php"
+#        content: |
+#          <?php
+#          phpinfo();
+#      become: yes
+#
+#    - name: Restart apache
+#      service: name="apache2" state="restarted"
+#      become: yes
+
+
+       

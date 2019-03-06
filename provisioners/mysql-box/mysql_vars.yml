@@ -1,0 +1,11 @@
+box_mysql_root_password: devroot
+
+box_mysql_databases:
+     - name: wordpress
+       encoding: utf8
+       collation: utf8_general_ci
+box_mysql_users:
+       - name: wordpress
+         host: "localhost"
+         password: wordpress
+         priv: "wordpress.*:ALL"

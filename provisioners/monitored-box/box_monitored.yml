@@ -1,0 +1,53 @@
+---
+- hosts: role_app
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared/"
+
+  vars_files:
+    - ./monitor_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+      tags: always
+
+    - name: ANSIBLE PYTHON | install python 2
+      raw: test -e /usr/bin/python || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags: always
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags: always
+
+    - name: gather facts
+      setup:
+      tags: always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      tags: always
+
+    - set_fact:
+        app_primary_instance: false
+      when: tags is defined and ("primary" not in tags or tags["primary"] == "no")
+
+    - debug: var="app_primary_instance"
+
+  roles:
+
+    - {
+      role: "sa-prometheus-exporters",
+      tags: ["create"],
+      prometheus_exporters: "{{box_prometheus_exporters}}"
+    }
+
+  tasks:
+
+    - debug: msg="Tasks section"
+
+    - debug: msg="Provider - |{{ box_provider }}| , Environment - |{{ env }}|"
+

@@ -1,0 +1,10 @@
+---
+
+app_le_domains:
+  - {
+    names: ["{{ application_domain }}", "www.{{ application_domain }}"],
+    dns: dns_gd,
+    ssl_install_path: /etc/nginx/ssl-certificates,
+    scheme: "key_crt",
+    certname: "wordpress"
+  }
