@@ -1,9 +1,5 @@
 #!/bin/bash
 
-ansible-galaxy install -p ./roles -r requirements.yml $1 $2 $3 $3 $4 $5 $6 $7 $8 $9
-
-exit 0
-
 git config -f .projmodules --get-regexp '^submodule\..*\.path$' > tempfile
 
 while read -u 3 path_key path
@@ -23,4 +19,3 @@ done 3<tempfile
 rm tempfile
 
 echo Project was checked out
-

@@ -1,5 +1,5 @@
 ---
-- hosts: web
+- hosts: wordpress_box
   gather_facts: False
 
   vars:
@@ -48,6 +48,6 @@
 
   tasks:
     - include_tasks: "components/application.yml"
-      tags: 
+      tags:
         - always
         - update

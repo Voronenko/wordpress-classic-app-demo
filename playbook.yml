@@ -1,4 +1,4 @@
-- hosts: wordpres_box
+- hosts: wordpress_box
   gather_facts: False
 
   vars:
@@ -37,5 +37,5 @@
       when: common_pretasks_exists.stat.exists == true
       tags: always
 
-    - name: Import base_box
-      import_playbook: provisioners/base_box/playbook.yml
+- name: Proceed with WP installation
+  import_playbook: provisioners/lamp-wp-box/playbook.yml

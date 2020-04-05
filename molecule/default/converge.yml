@@ -17,10 +17,13 @@
 #        role: "sa-rolename"
 #       }
 
-#- name: Apply bootstrap box play
-#  import_playbook: ../../playbook_bootstrap.yml
+- name: Apply bootstrap box play
+  import_playbook: ../../playbook_bootstrap.yml
 
 
 - name: Apply components box play
   import_playbook: ../../playbook_components.yml
 
+
+- name: Apply wp box play
+  import_playbook: ../../playbook.yml

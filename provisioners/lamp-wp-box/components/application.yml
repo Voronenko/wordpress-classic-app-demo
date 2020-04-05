@@ -7,14 +7,43 @@
       - application
       - update
 
+  - name: Application | Ensure ssl certs directory exists
+    file: path="{{ssl_install_path}}" state="directory" owner="root" group="root" mode="u=rwx,g=rx,o="
+    become: yes
+    tags:
+      - application
+      - update
+
   - name: Application | Generate dhparam.pem if needed
-    command: "openssl dhparam -out {{ssl_install_path}}/dhparam.pem 2048"
+    command: "openssl dhparam -out /etc/nginx/dhparam.pem 2048"
     args:
-      creates: "{{ssl_install_path}}/dhparam.pem"
+      creates: "/etc/nginx/dhparam.pem"
     when: application_protocol_scheme == "https"
     become: yes
     tags:
       - application
+
+  - name: Application | Check certificates presence
+    stat:
+      path: "{{ssl_install_path}}/privkey.pem"
+    register: cert_result
+    become: yes
+
+  - block:
+
+      - name: Self signed | Install last stable
+        apt: update-cache=yes force=yes state=present pkg=openssl
+        become: yes
+
+      - name: Self signed | Ensure cert dir
+        file: path="{{ssl_install_path}}" state="directory"
+        become: yes
+
+      - name: Self signed | Generate self signed passwordless certificate
+        command: openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -subj "/C=EU/ST=Ukraine/L=Lviv/O=Dis/CN={{ application_domain }}" -keyout {{ssl_install_path}}/privkey.pem  -out {{ssl_install_path}}/fullchain.pem
+        become: yes
+
+    when: cert_result.stat.exists == False
 
 
   - name: Application | dependencies

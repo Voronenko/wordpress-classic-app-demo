@@ -1,0 +1,9 @@
+---
+# tasks file for sa-php-pharables
+
+  - import_tasks: php_switchversion.yml
+
+  - include_tasks: "tasks_{{ item.tool }}.yml"
+    vars:
+        phar_config: "{{ item }}"
+    with_items: "{{ phars }}"

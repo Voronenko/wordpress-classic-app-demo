@@ -10,7 +10,7 @@ lint: |
        set -e
        yamllint .
        ansible-lint
-       flake8  
+       flake8
 
 molecule:
   raw_ssh_args:
@@ -69,10 +69,10 @@ platforms:
       - monitored_box
 
     # optional - box is accesible from your real network
-#    interfaces:
-#      - network_name: private_network
-#        type: dhcp
-#        auto_config: true
+    interfaces:
+     - network_name: private_network
+       type: dhcp
+       auto_config: true
 
 
     # interfaces:

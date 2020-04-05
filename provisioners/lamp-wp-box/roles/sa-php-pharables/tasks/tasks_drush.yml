@@ -1,0 +1,21 @@
+  - name: PHP | Install drush
+    get_url:
+      url: "https://github.com/drush-ops/drush/releases/download/{{ phar_config.version | default('8.0.5') }}/drush.phar"
+      dest: "/usr/local/bin/drush.phar"
+    become: yes
+    tags:
+      -drush
+
+  - name: PHP | rename drush.phar to drush
+    shell: "mv /usr/local/bin/drush.phar /usr/local/bin/drush"
+    args:
+      creates: "/usr/local/bin/drush{{ php_version }}"
+    become: yes
+    tags:
+      -drush
+
+  - name: PHP | creates php version specific drush invoker
+    template: src="{{ role_dir }}/templates/drush/drush.j2" dest="/usr/local/bin/drush{{ php_version }}" mode="u=rwx,g=rx,o=rx"
+    become: yes
+    tags:
+      -drush
