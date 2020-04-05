@@ -1,0 +1,24 @@
+---
+# defaults file for sa-mariadb
+
+  role_dir: "{{role_path}}"
+
+  mariadb_system_user: mysql
+  mariadb_system_group: mysql
+  mariadb_family: "10.3"
+  mariadb_bind_to: 127.0.0.1
+
+  mysql_host: "127.0.0.1"
+  option_harden_mysql: true
+  option_install_python: true
+
+  mysql_root_user: root
+  mysql_root_password: devroot
+
+
+  mycnf_base_properties: []
+#    - {regexp: "^#* *bind-address.*", line: "bind-address = {{mariadb_bind_to}}"}
+
+# For installation in VPC we really don't have brute force attacks
+  mycnf_extra_properties: []
+#    - {regexp: "^#* *max_connect_errors", line: "max_connect_errors = 4294967295", insertafter: '\[mysqld\]'}

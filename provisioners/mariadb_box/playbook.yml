@@ -1,0 +1,59 @@
+---
+- hosts: mariadb_box
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+
+
+  vars_files:
+    - ./mysql_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+      tags: always
+
+    - name: ANSIBLE PYTHON | install python2 minimal if default python missing
+      raw: test -e /usr/bin/python || test -e /usr/bin/python3 || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags: always
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags: always
+
+    - name: gather facts
+      setup:
+      tags: always
+
+    - name: Check for common pretasks
+      local_action: stat path="{{shared_dir}}/common_pretasks.yml"
+      register: common_pretasks_exists
+      tags: always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      when: common_pretasks_exists.stat.exists == true
+      tags: always
+
+
+  roles:
+
+      - {
+          role: "sa_mariadb",
+          tags: [create, mysql],
+          option_harden_mysql: "{{ box_option_harden_mysql }}",
+          option_install_python: "{{ box_option_install_python }}",
+          mysql_root_user: root,
+          mariadb_bind_to: "{{ box_mariadb_bind_to }}",
+          mysql_root_password: "{{box_mysql_root_password}}",
+          mysql_databases: "{{box_mysql_databases | default([])}}",
+          mysql_users: "{{box_mysql_users | default([])}}",
+          mycnf_extra_properties: "{{ box_mycnf_extra_properties }}"
+        }
+
+  tasks:
+
+    - debug: msg="Pre tasks section"

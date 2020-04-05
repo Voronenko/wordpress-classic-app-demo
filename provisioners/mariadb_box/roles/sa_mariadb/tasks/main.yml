@@ -1,0 +1,17 @@
+---
+# tasks file for sa-mariadb
+
+  - include: tasks_python.yml
+    when: option_install_python
+
+  - include: tasks_mariadb.yml
+
+  - include: tasks_mariadb_cfg_patch.yml
+
+  - include: tasks_mysql_harden.yml
+    when: option_harden_mysql
+
+  - include: tasks_dbs_configure.yml
+
+  - include: tasks_console_helper.yml
+

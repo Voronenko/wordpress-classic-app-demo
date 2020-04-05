@@ -1,0 +1,3 @@
+[submodule "roles/sa-php-pharables"]
+        path = roles/sa-php-pharables
+        url = https://github.com/softasap/sa-php-pharables.git

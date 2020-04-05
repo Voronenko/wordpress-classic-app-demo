@@ -1,0 +1,11 @@
+---
+# defaults file for sa-apache
+  role_dir: "{{role_path}}"
+  root_dir: "{{role_path}}"
+
+  apache_mode: "worker" # prefork | worker
+  apache2_disable_default: true
+
+  apache_modules:
+    - rewrite
+    - ssl

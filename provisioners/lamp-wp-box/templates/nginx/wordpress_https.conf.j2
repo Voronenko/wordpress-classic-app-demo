@@ -11,15 +11,14 @@ server {
 
   server_name {{ application_domain }};
 
-  ssl on;
-  ssl_certificate {{ssl_install_path}}/{{ssl_cert_name}}.crt;
-  ssl_certificate_key {{ssl_install_path}}/{{ssl_key_name}}.key;
+  ssl_certificate {{ssl_install_path}}/fullchain.pem;
+  ssl_certificate_key {{ssl_install_path}}/privkey.pem;
   ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
   ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
   ssl_prefer_server_ciphers on;
   ssl_session_cache shared:SSL:10m;
   ssl_session_timeout  10m;
-  ssl_dhparam {{ssl_install_path}}/dhparam.pem;
+  ssl_dhparam /etc/nginx/dhparam.pem;
 
   root {{ application_web_root_dir }};
   index index.php;
@@ -74,7 +73,7 @@ server {
   location ~ \.php$ {
     try_files $uri =404;
     fastcgi_split_path_info ^(.+\.php)(/.+)$;
-    fastcgi_pass unix:/run/php/php7.0-fpm.sock;
+    fastcgi_pass unix:/run/php/php7.2-fpm.sock;
     fastcgi_index index.php;
     include fastcgi_params;
     fastcgi_param  SCRIPT_FILENAME  $document_root$fastcgi_script_name;

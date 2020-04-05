@@ -1,0 +1,34 @@
+
+  - name: File2Ban | Install fail2ban
+    apt: pkg=fail2ban state=installed update-cache=yes
+    become: yes
+    tags:
+      - file2ban
+
+  - name: File2Ban | Template ufw action to ban with ufw
+    template: src="{{role_dir}}/templates/ufw.conf.j2" dest=/etc/fail2ban/action.d/ufw.conf
+    when: file2ban_action == 'ufw'
+    become: yes
+    tags:
+      - file2ban
+
+  - name: File2Ban | local fail2ban jail config
+    template: src="{{file2ban_jaillocal_template}}" dest=/etc/fail2ban/jail.local
+    when: file2ban_jaillocal_template is defined
+    become: yes
+    tags:
+      - file2ban
+
+  - name: File2Ban | Whitelist control hosts /etc/hosts.allow
+    lineinfile: dest='/etc/hosts.allow' line='{{item}}' insertafter="EOF" create=yes state=present
+    with_items: "{{file2ban_whitelisted_hosts | default([])}}"
+    become: yes
+    tags:
+      - denyhosts
+
+  - name: File2Ban |  Reload fail2ban
+    service: name=fail2ban state=restarted enabled="yes"
+    when: docker_test is not defined
+    become: yes
+    tags:
+      - file2ban

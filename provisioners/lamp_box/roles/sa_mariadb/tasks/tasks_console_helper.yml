@@ -1,0 +1,18 @@
+---
+
+  - name: MariaDB | Install colorer grc
+    package: name="grc" state="present"
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    tags: mysql
+
+  - name: MariaDB | Template colorer to current user
+    template: src="{{ role_dir }}/templates/grcat.mysql" dest="~/grcat.mysql"
+    tags: psql
+
+  - name: MariaDB | mysql.cnf to current user
+    template: src="{{ role_dir }}/templates/my.cnf.j2" dest="~/.my.cnf"
+    tags: psql
+

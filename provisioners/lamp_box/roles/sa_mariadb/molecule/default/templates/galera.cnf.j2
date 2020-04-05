@@ -1,0 +1,21 @@
+[mysqld]
+#mysql settings
+binlog_format=ROW
+default-storage-engine=innodb
+innodb_autoinc_lock_mode=2
+query_cache_size=0
+query_cache_type=0
+innodb_flush_log_at_trx_commit=0
+innodb_buffer_pool_size=256M
+bind-address=0.0.0.0
+
+#Galera settings
+wsrep_provider="/usr/lib/galera/libgalera_smm.so"
+#SSL for Galera
+wsrep_provider_options="socket.ssl_key=/etc/mysql/ssl/server-key.pem;socket.ssl_cert=/etc/mysql/ssl/server-cert.pem;socket.ssl_ca=/etc/mysql/ssl/ca-cert.pem"
+wsrep_cluster_name="mariadb_cluster"
+wsrep_cluster_address="gcomm://{{ galera_nodes }}"
+wsrep_sst_method=rsync
+wsrep_on=ON
+wsrep_node_address="{{ galera_host }}"
+wsrep_node_name="{{ inventory_hostname }}"

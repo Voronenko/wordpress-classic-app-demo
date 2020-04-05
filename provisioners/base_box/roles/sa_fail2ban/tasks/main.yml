@@ -1,0 +1,3 @@
+---
+# tasks file for sa-fail2ban
+  - include: tasks_fail2ban.yml

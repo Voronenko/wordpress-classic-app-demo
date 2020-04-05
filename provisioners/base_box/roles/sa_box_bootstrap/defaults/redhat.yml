@@ -1,0 +1,9 @@
+deploy_user_group: 'wheel'
+
+fail2ban_packages:
+  - fail2ban
+  - fail2ban-systemd
+
+fail2ban_action: "firewallcmd-ipset"
+
+firewall_type: firewalld

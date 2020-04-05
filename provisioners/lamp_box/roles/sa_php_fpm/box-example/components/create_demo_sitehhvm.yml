@@ -1,0 +1,17 @@
+---
+  - name: Create demo site folder
+    file: path="/var/www/demohhvm" state="directory"
+    become: yes
+
+  - name: Push demo site contents
+    synchronize: src="{{root_dir}}/files/demosite/" dest="/var/www/demohhvm"
+    become: yes
+
+  - name: Template demosite nginx config
+    template: src="{{root_dir}}/templates/nginx/sitehhvm.conf.j2" dest="/etc/nginx/sites-enabled/sitehhvm.conf"
+    dest: /var/www/demohhvm
+    become: yes
+
+  - name: Restart nginx
+    service: name="nginx" state="restarted"
+    become: yes

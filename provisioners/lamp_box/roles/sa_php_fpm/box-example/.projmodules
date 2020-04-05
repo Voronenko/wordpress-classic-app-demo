@@ -1,0 +1,12 @@
+[submodule "roles/sa-nginx"]
+        path = roles/sa-nginx
+        url = https://github.com/softasap/sa-nginx.git
+[submodule "roles/sa-apache"]
+        path = roles/sa-apache
+        url = https://github.com/softasap/sa-apache.git
+[submodule "roles/sa-php-fpm"]
+        path = roles/sa-php-fpm
+        url = https://github.com/softasap/sa-php-fpm.git
+[submodule "roles/sa-mysql"]
+        path = roles/sa-mysql
+        url = https://github.com/softasap/sa-mysql.git

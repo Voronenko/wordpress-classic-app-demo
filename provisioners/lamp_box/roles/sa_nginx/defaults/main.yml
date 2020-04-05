@@ -1,0 +1,6 @@
+# defaults file for sa-nginx-role
+
+  role_dir: "{{ role_path }}"
+
+  nginx_groups: []
+#    - "www-data"

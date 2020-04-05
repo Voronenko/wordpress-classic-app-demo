@@ -1,0 +1,21 @@
+  - name: PHP | Install wp
+    get_url:
+      url: "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
+      dest: "/usr/local/bin/wp-cli.phar"
+    become: yes
+    tags:
+      -wp
+
+  - name: PHP | rename wp-cli.phar to wp
+    shell: "mv /usr/local/bin/wp-cli.phar /usr/local/bin/wp"
+    args:
+      creates: "/usr/local/bin/wp{{ php_version }}"
+    become: yes
+    tags:
+      -wp
+
+  - name: PHP | creates php version specific wp invoker
+    template: src="{{ role_dir }}/templates/wp/wp.j2" dest="/usr/local/bin/wp{{ php_version }}" mode="u=rwx,g=rx,o=rx"
+    become: yes
+    tags:
+      -wp

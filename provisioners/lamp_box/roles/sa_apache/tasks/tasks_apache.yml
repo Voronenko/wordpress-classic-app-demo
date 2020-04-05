@@ -1,0 +1,106 @@
+    - name: Apache | Check if is installed
+      command: test -x /usr/sbin/apache2
+      register: apache_present
+      ignore_errors: yes
+      tags:
+        - apache2
+
+    - name: Apache | install apache2
+      apt: name=apache2 update_cache=yes state=latest
+      when: apache_present is failed
+      become: yes
+      tags:
+        - apache2
+
+# There is no apache2-mpm-worker package because the mpm_worker module is included by default when you install Apache on 16.04.
+# It is contained in the apache2-bin package that is a dependency of apache2 dpkg -L apache2-bin | grep mpm
+
+    - name: Apache | install apache2 MPM Worker
+      apt: name=apache2-mpm-worker state=latest
+      when: "apache_mode == 'worker' and (ansible_distribution_release in ['trusty']) and apache_present is failed"
+      become: yes
+      tags:
+        - apache2
+
+    - name: Apache |install libapache2-mod-fastcgi
+      apt: name=libapache2-mod-fastcgi state=latest
+      when: "apache_mode == 'worker' and not(ansible_distribution_release in ['bionic'])  and apache_present is failed"
+      become: yes
+      tags:
+        - apache2
+
+    - name: Apache |install libapache2-mod-fastcgi
+      get_url:
+        url: http://mirrors.kernel.org/ubuntu/pool/multiverse/liba/libapache-mod-fastcgi/libapache2-mod-fastcgi_2.4.7~0910052141-1.2_amd64.deb
+        dest: /tmp/libapache2-mod-fastcgi_2.4.7~0910052141-1.2_amd64.deb
+      when: "apache_mode == 'worker' and (ansible_distribution_release in ['bionic'])  and apache_present is failed"
+      become: yes
+      tags:
+        - apache2
+
+    - name: Apache |install libapache2-mod-fastcgi
+      apt: deb="/tmp/libapache2-mod-fastcgi_2.4.7~0910052141-1.2_amd64.deb"
+      when: "apache_mode == 'worker' and (ansible_distribution_release in ['bionic'])  and apache_present is failed"
+      become: yes
+      tags:
+        - apache2
+
+    - name: Apache |enabled module {{item}}
+      apache2_module: name=rewrite state=present
+      with_items: "{{apache_modules|default([])}}"
+      when: apache_present is failed
+      become: yes
+      notify:
+        - restart apache2
+      tags:
+        - apache2
+
+    - name: Apache |enabled mod_actions
+      apache2_module: name=actions state=present
+      when: "apache_mode == 'worker' and apache_present is failed"
+      become: yes
+      notify:
+        - restart apache2
+      tags:
+        - apache2
+
+    - name: Apache |enabled mod_alias
+      apache2_module: name=alias state=present
+      when: "apache_mode == 'worker' and apache_present is failed"
+      become: yes
+      notify:
+        - restart apache2
+      tags:
+        - apache2
+
+    - name: Apache |enabled mod_ssl
+      apache2_module: name=ssl state=present
+      when: apache_present is failed
+      become: yes
+      notify:
+        - restart apache2
+      tags:
+        - apache2
+
+    - name: Apache |enabled mod_fastcgi
+      apache2_module: name=fastcgi state=present
+      when: "apache_mode == 'worker' and apache_present is failed"
+      become: yes
+      notify:
+        - restart apache2
+      tags:
+        - apache2
+
+    - name: Apache | deactivate default site if {{apache2_disable_default}} is set
+      command: a2dissite 000-default
+      when: apache2_disable_default and apache_present is failed
+      become: yes
+      tags:
+        - apache2
+
+    - name: Apache |restart apache2
+      service: name=apache2 state=restarted
+      when: docker_test is not defined
+      become: yes
+      tags:
+        - apache2

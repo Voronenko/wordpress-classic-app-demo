@@ -1,0 +1,104 @@
+---
+- name: Converge
+  hosts: all
+
+  pre_tasks:
+    - debug: msg="Pre tasks section for {{ansible_host}}"
+
+    - set_fact:
+        remote_ip_address: "{{ ansible_host }}"
+
+    - include_vars: "playbook_vars.yml"
+
+  roles:
+     - {
+        role: "sa-mariadb"
+       }
+
+  tasks:
+    - name: dependencies
+      apt: name="rsync" state="present"
+      become: yes
+
+    - name: Create replication user
+      mysql_user:
+        name: "{{ repl_user }}"
+        password: "{{ repl_pass }}"
+        host: "%"
+        priv: '*.*:ALL'
+        state: present
+        login_user: "{{ login_user }}"
+        login_password: "{{ login_pass }}"
+
+    - name: Certs dir
+      file: path="/etc/mysql/ssl/" state=directory
+      become: yes
+
+    - name: Copy certs dir
+      copy:
+        src: "files/ssl/{{item}}"
+        dest: "/etc/mysql/ssl/{{item}}"
+      become: yes
+      with_items:
+        - ca-cert.pem
+        - server-cert.pem
+        - server-key.pem
+
+    - debug: var="hostvars['db01']"
+
+    - name: Create List of nodes to be added into Cluster
+#      set_fact: galera_nodes={%for thehost in groups['all']%}{{hostvars[thehost].ansible_default_ipv4.address}}{% if not loop.last %},{% endif %}{% endfor %}
+# todo
+      set_fact: galera_nodes={%for thehost in groups['all']%}{{hostvars[thehost].ansible_all_ipv4_addresses[1]}}{% if not loop.last %},{% endif %}{% endfor %}
+
+    - name: and for galera host
+      set_fact: galera_host="{{ansible_all_ipv4_addresses[1]}}"
+
+    - debug: var="galera_nodes"
+
+    - name: Template galera.cnf
+      template: src="templates/galera.cnf.j2" dest="/etc/mysql/conf.d/galera.cnf"
+      become: yes
+
+    - name: Template my.cnf
+      template: src="templates/dot_my.cnf.j2" dest="/home/{{ansible_user_id}}/.my.cnf"
+
+    - name: Check cluster not initialized
+      shell: mysql -e "SHOW STATUS LIKE 'wsrep_cluster_size';" | grep wsrep_cluster_size | grep -v 0
+      register: cluster_result
+      ignore_errors: true
+
+    - block:
+
+        - name: stop mysql
+          service: name="mysql" state="stopped"
+          become: yes
+
+        - name: Initialize cluster
+          command: /usr/bin/galera_new_cluster
+          become: yes
+
+      when: cluster_result is failed and inventory_hostname in groups['db01']
+
+    - pause:
+        seconds: 30
+
+
+    - block:
+
+        - name: restart mysql
+          service: name="mysql" state="restarted"
+          become: yes
+
+      when: cluster_result is failed and ( inventory_hostname in groups['db02'] or inventory_hostname in groups['db03'] )
+
+
+
+#  sudo service mysql stop
+#  sudo /usr/bin/galera_new_cluster
+#  mysql -u root -p -e "SHOW STATUS LIKE 'wsrep_cluster_size';"
+
+# server 2,3
+
+#sudo systemctl mysql stop
+#sudo systemctl mysql start

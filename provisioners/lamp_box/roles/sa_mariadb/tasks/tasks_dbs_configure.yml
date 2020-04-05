@@ -1,0 +1,94 @@
+---
+  - name: Check mysql config
+    command: test -e /usr/bin/mysql_config
+    ignore_errors: true
+    changed_when: False
+    register: mysql_config_exists
+
+# todo
+#  - name: Install libmariadbclient-dev
+#    apt: name="libmariadbclient-dev" state="present"
+#    retries: 3
+#    register: result
+#    until: not result is failed
+#    become: yes
+#    when: mysql_config_exists is failed
+#
+#  - name: link  /usr/bin/mariadb_config to /usr/bin/mysql_config
+#    file:
+#      src: /usr/bin/mariadb_config
+#      dest: /usr/bin/mysql_config
+#      state: link
+#    become: yes
+#    when: mysql_config_exists is failed
+
+  - name: Install libmysqlclient-dev
+    apt: name="libmysqlclient-dev" state="present"
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    when: mysql_config_exists is failed
+
+  - name: For troubleshouting, output ansible_python_version
+    debug: var="ansible_python_version"
+
+  - name: Install setup tools(2)
+    package:
+       name:
+         - python-setuptools
+         - python-pip
+       state: present
+    when: ansible_python_version is version_compare('3','<')
+    become: yes
+    tags:
+      - mysql
+
+  - name: Install setup tools(3)
+    package:
+       name:
+         - python3-setuptools
+         - python3-pip
+       state: present
+    when: ansible_python_version is version_compare('3','>=')
+    become: yes
+    tags:
+      - mysql
+
+  - name: Configuration | install python mysql connector
+    pip: name=pymysql state=present
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    tags:
+      - mysql
+
+  - name: Configuration | Create databases
+    mysql_db:
+      name: "{{ item.name }}"
+      collation: "{{ item.collation | default('utf8_general_ci') }}"
+      encoding: "{{ item.encoding | default('utf8') }}"
+      state: present
+      login_host: "{{ mysql_host | default('localhost') }}"
+      login_user: "{{ mysql_root_user | default('root') }}"
+      login_password: "{{ mysql_root_password | default('devroot') }}"
+    with_items: "{{ mysql_databases | default([]) }}"
+    tags:
+      - mysql
+
+  - name: Configuration | Create users
+    mysql_user:
+      name: "{{ item.name }}"
+      host: "{{ item.host | default('localhost') }}"
+      password: "{{ item.password }}"
+      priv: "{{ item.priv | default('*.*:USAGE') }}"
+      state: "{{ item.state | default('present') }}"
+      append_privs: "{{ item.append_privs | default('no') }}"
+      login_host: "{{ mysql_host | default('localhost') }}"
+      login_user: "{{ mysql_root_user | default('root') }}"
+      login_password: "{{ mysql_root_password | default('devroot') }}"
+    with_items: "{{ mysql_users | default([]) }}"
+    no_log: true
+    tags:
+      - mysql

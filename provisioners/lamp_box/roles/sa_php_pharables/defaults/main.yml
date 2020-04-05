@@ -1,0 +1,20 @@
+---
+# defaults file for sa-php-pharables
+
+  role_dir: "{{ role_path }}"
+
+  php_family: default # 5.6 | 7.0 | default
+
+  phars:
+    - {
+      tool: "composer"
+      }
+    - {
+      tool: "drush"
+      }
+    # - {
+    #   tool: "wp"
+    #   }
+    # - {
+    #   tool: "custom"
+    #   }

@@ -1,0 +1,29 @@
+---
+- name: Converge
+  hosts: all
+
+  pre_tasks:
+    - debug: msg="Pre tasks section for {{ ansible_host }}"
+
+    - name: set default facts
+      set_fact:
+        remote_ip_address: "{{ ansible_host }}"
+
+    - name: Include default vars
+      include_vars: "playbook_vars.yml"
+
+#  roles:
+#     - {
+#        role: "sa-rolename"
+#       }
+
+- name: Apply bootstrap box play
+  import_playbook: ../../playbook_bootstrap.yml
+
+
+- name: Apply components box play
+  import_playbook: ../../playbook_components.yml
+
+
+- name: Apply wp box play
+  import_playbook: ../../playbook.yml

@@ -1,0 +1,86 @@
+---
+  # Parameters:
+  #  mysql_root_password
+
+  - name: MariaDB | Check if is installed
+    command: test -x /usr/bin/mysql
+    register: mariadb_present
+    ignore_errors: yes
+    tags:
+      - mariadb
+      - skip_ansible_lint
+
+  - name: MariaDB | Add repo key
+    apt_key: id=1BB943DB url=http://keyserver.ubuntu.com/pks/lookup?op=get&search=0xCBCB082A1BB943DB state=present
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+
+  - name: MariaDB | Add repo key
+    apt_key:
+      keyserver: keyserver.ubuntu.com
+      id: F1656F24C74CD1D8
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+  - name: MariaDB | Add deb repo
+    apt_repository:
+      repo: 'deb http://ams2.mirrors.digitalocean.com/mariadb/repo/{{ mariadb_family }}/ubuntu {{ ansible_distribution_release | lower }} main'
+      state: present
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+  - name: MariaDB | Add src repo
+    apt_repository:
+      repo: 'deb-src http://ams2.mirrors.digitalocean.com/mariadb/repo/{{ mariadb_family }}/ubuntu {{ ansible_distribution_release | lower }} main'
+      state: present
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+  - name: MariaDB | Preset root password
+    debconf:
+      name: mariadb-server
+      question: "{{ item }}"
+      vtype: password
+      value: "{{ mysql_root_password }}"
+    with_items:
+      - mysql-server/root_password
+      - mysql-server/root_password_again
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+  - name: MariaDB | Install Server
+    apt: update-cache=yes force=yes state=present pkg=mariadb-server
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb
+
+  - name: MariaDB | Install Client tools
+    apt: update-cache=yes force=yes state=present pkg=mariadb-client
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    when: mariadb_present is failed
+    tags:
+      - mariadb

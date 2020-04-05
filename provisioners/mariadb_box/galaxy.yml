@@ -1,0 +1,17 @@
+namespace: "softasap"
+name: "mariadb_box"
+description: wraps sa-mariadb installs mariadb database server
+version: 0.3.0
+readme: "Readme.md"
+authors:
+    - "Vyacheslav Voronenko"
+dependencies:
+license:
+    - "MIT"
+tags:
+    - softasap
+    - mariadb
+repository: "https://github.com/oops-to-devops/mariadb_box"
+documentation: "https://github.com/oops-to-devops/mariadb_box/blob/master/README.md"
+homepage: "https://www.softasap.com"
+issues: "https://github.com/orgs/oops-to-devops/projects/1"

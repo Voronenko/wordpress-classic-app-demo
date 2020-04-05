@@ -1,0 +1,103 @@
+---
+- hosts: lamp_box
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+
+  vars_files:
+    - ./lamp_vars.yml
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+      tags: always
+
+    - name: ANSIBLE PYTHON | install fallback python if needed
+      raw: test -e /usr/bin/python || test -e /usr/bin/python3 || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags: always
+
+    - name: gather facts
+      setup:
+      tags: always
+
+    - name: Check for common pretasks
+      local_action: stat path="{{shared_dir}}/common_pretasks.yml"
+      register: common_pretasks_exists
+      tags: always
+
+    - name: Include common pretasks
+      include_tasks: "{{shared_dir}}/common_pretasks.yml"
+      when: common_pretasks_exists.stat.exists == true
+      tags: always
+
+  roles:
+
+      - {
+           role: "sa_apache",
+           apache_mode: "{{ box_apache_mode }}",
+           apache2_disable_default: "{{ box_apache2_disable_default }}",
+           apache_modules: "{{ box_apache_modules }}",
+           when: box_webserver == "apache",
+           tags: [create, sa_apache]
+        }
+
+      - {
+           role: "sa_nginx",
+           nginx_groups: "{{ box_nginx_groups }}",
+           when: box_webserver == "nginx",
+           tags: [create, sa_nginx]
+        }
+
+      - {
+         role: "sa_php_fpm",
+         php_family: "{{ box_php_family }}", # 5.6  | 7.0 | hhvm |  default
+         option_install_xdebug: "{{box_option_install_xdebug}}",
+         custom_pool_properties: "{{box_php_pool_properties}}",
+         php_extensions: "{{box_additional_php_extensions}}",
+         tags: [create, sa_php_fpm]
+        }
+
+  tasks:
+
+    - debug: msg="Pre tasks section"
+
+    - name: Ensure /var/www/html directories present
+      file: path="/var/www/html" state="directory" owner="root" group="www-data" mode="u=rwx,g=rwx,o=rx"
+      become: yes
+
+    - name: POC marker
+      copy:
+        dest: "/var/www/html/ii.php"
+        content: |
+          <?php
+          phpinfo();
+      become: yes
+
+    - block:
+
+       - name: Configure apache2 for php (a2enmod)
+         shell: a2enmod actions fastcgi alias proxy_fcgi
+         become: yes
+
+       - name: Configure apache2 for php (a2enconf)
+         shell: "a2enconf php{{ box_php_family }}-fpm"
+         become: yes
+
+       - name: Restart apache
+         service: name="apache2" state="restarted"
+         become: yes
+
+      when: box_webserver == "apache"
+      tags:
+        - sa_apache
+
+
+
+
+

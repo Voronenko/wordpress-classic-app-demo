@@ -1,0 +1,20 @@
+---
+# defaults file for sa-secure-automatic-updates
+
+role_dir: "{{role_path}}"
+updates_notify_email: "root@locahost"
+
+unattended_origins_patterns:
+  - '${distro_id}:${distro_codename}-security'
+
+# List of packages to not update
+unattended_package_blacklist: []
+
+
+unattended_properties: []
+#   - {regexp: "^(\/\/)? Unattended-Upgrade::SyslogEnable *", line:"Unattended-Upgrade::SyslogEnable"}
+
+unattended_properties_extra: []
+#   - {regexp: "^(\/\/)? Unattended-Upgrade::SyslogEnable *", line:"Unattended-Upgrade::SyslogEnable"}
+
+unattended_allow_reboot_time: "01:00"

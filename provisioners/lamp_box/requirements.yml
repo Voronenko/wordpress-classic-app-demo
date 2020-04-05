@@ -1,0 +1,12 @@
+- src: softasap.sa-apache
+  name: sa_apache
+- src: softasap.sa-nginx
+  name: sa_nginx
+- src: softasap.sa-php-fpm
+  name: sa_php_fpm
+- src: softasap.sa-mariadb
+  name: sa_mariadb
+- src: softasap.sa-php-pharables
+  name: sa_php_pharables
+- src: softasap.sa-php-hhvm
+  name: sa_php_hhvm

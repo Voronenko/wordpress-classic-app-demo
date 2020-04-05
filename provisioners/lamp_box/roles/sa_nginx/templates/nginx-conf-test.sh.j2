@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#
+# validate nginx config
+#
+# based on script by Paul Downey
+# https://gist.github.com/psd/5042334
+
+test_conf=`mktemp`
+target_conf=$1
+
+cat > $test_conf <<-!
+events {
+  worker_connections  512;
+}
+http {
+  include $target_conf;
+}
+!
+
+PATH=/usr/sbin:/usr/local/sbin nginx -t -c $test_conf
+rc=$?
+
+rm "$test_conf"
+
+exit $rc

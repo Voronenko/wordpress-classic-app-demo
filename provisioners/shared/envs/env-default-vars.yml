@@ -14,6 +14,12 @@ application_domain: blog.voronenko.net
 
 # /lamp-wp-box overrides
 
+# lamp-box overrides
+
+box_webserver: nginx
+
+# /lamp-box
+
 # mysql-box overrides
 box_mysql_root_password: devroot1
 

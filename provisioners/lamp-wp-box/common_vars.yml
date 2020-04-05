@@ -5,7 +5,7 @@ root_dir: ..
 deploy_user: "{{ansible_user_id}}"
 
 application_dependencies:
-  - php7.0-xml
+  - php7.2-xml
 
 application_name: "wordpress"
 application_type: "classic"
@@ -25,7 +25,7 @@ application_admin_email: avisbird@gmail.com
 application_admin_pass: tHyDrOLoiShe
 
 
-application_fastcgi_pass: "unix:/run/php/php7.0-fpm.sock"
+application_fastcgi_pass: "unix:/run/php/php7.2-fpm.sock"
 
 application_wp_home: "http://{{application_domain}}"
 
@@ -48,12 +48,12 @@ ssl_files:
 ssl_cert_name: "{{ application_name }}"
 ssl_key_name: "{{ application_name }}"
 
-wp_cli: "wp7.0"
+wp_cli: "wp7.2"
 
 #application_ftp_user: ftps_wordpress
 
 application_default_wp_title: "wordpress"
-application_default_wp_version: "4.8.1"
+application_default_wp_version: "5.4"
 application_default_wp_plugins:
   - "akismet"
 #  - "amp"

@@ -1,0 +1,111 @@
+- name: XDebug | dependencies
+  apt: state=present pkg="php{{ php_version }}-dev"
+  become: yes
+  tags:
+    -xdebug
+
+- name: XDebug | Make temporary directory
+  shell: mktemp -d
+  register: xdebug_workspace
+  changed_when: False
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Detect module path
+  shell: "echo `/usr/bin/php{{ php_version }} -i | grep extension_dir | awk '{print $(NF)}'`"
+  register: php_module_path
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Detect ini path
+  shell: echo `/usr/bin/php{{ php_version }} -i | grep "Scan this dir for additional .ini files" | awk '{print $(NF)}'`
+  register: php_extension_conf_path
+  changed_when: False
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Download Xdebug
+  get_url: url="http://xdebug.org/files/xdebug-{{ php_xdebug_version }}.tgz" dest="{{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}.tgz"
+  tags:
+    -xdebug
+
+- name: XDebug | Untar Xdebug.
+  command: >
+    tar -C {{ xdebug_workspace.stdout }} -xvzf {{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}.tgz
+    creates={{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}/README
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Build Xdebug.
+  shell: "{{ item.exec }}"
+  args:
+    chdir: "{{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}"
+    creates: "{{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}/modules/xdebug.so"
+  with_items:
+    - { exec : "/usr/bin/phpize{{ php_version }}" }
+    - { exec : "./configure --with-php-config=/usr/bin/php-config{{ php_version }}" }
+    - { exec : "make" }
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Ensure php module path exists.
+  file:
+    path: "{{ php_module_path.stdout }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  become: yes
+  tags:
+    -xdebug
+
+- name: XDebug | Move Xdebug module into place.
+  shell: cp {{ xdebug_workspace.stdout }}/xdebug-{{ php_xdebug_version }}/modules/xdebug.so {{ php_module_path.stdout }}/xdebug.so
+  args:
+    creates: "{{ php_module_path }}/xdebug.so"
+  become: yes
+  tags:
+    -xdebug
+    -skip_ansible_lint
+
+- name: XDebug | Copy xdebug INI into php.d folder.
+  template:
+    src: "{{ role_dir }}/templates/php_debug/xdebug.ini.j2"
+    dest: "{{ php_extension_conf_path.stdout.replace('/cli/','/fpm/') }}/xdebug.ini"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - {
+       php_module_path: "{{ php_module_path.stdout }}"
+      }
+  become: yes
+  tags:
+    -xdebug
+
+- name: XDebug | Errors to browser
+  template:
+    src: "{{ role_dir }}/templates/php_debug/devbox.ini.j2"
+    dest: "{{ php_extension_conf_path.stdout.replace('/cli/','/fpm/') }}/devbox.ini"
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - {
+      php_module_path: "{{ php_module_path.stdout }}"
+    }
+  become: yes
+  tags:
+    -xdebug
+
+
+- name: XDebug | Forced fpm restart for the first time
+  service: name="{{ php_fpm_prefix }}-fpm" state="restarted"
+  become: yes
+  tags:
+    -xdebug

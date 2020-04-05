@@ -1,0 +1,32 @@
+---
+  - name: MySQL Hardening | Install dependency
+    apt: pkg="expect" state="present"
+    retries: 3
+    register: result
+    until: not result is failed
+    become: yes
+    tags:
+      - mysql
+
+  - block:
+      - name: Template hardening script (1/2)
+        template: src="{{ role_dir }}/templates/harden/secure_mysql_bash.sh.j2" dest="~/secure_mysql_bash.sh" mode="0750"
+        tags:
+          - mysql
+
+      # - name: Template hardening script (2/2)
+      #   template: src="{{ role_dir }}/templates/harden/secure_mysql.expect.j2" dest="~/secure_mysql.expect"
+      #   tags:
+      #     - mysql
+
+      - name: execute hardening script (bash)
+        command: ~/secure_mysql_bash.sh
+        tags:
+          - mysql
+
+    always:
+      - name: Cleanup hardening scripts
+        file: path="{{ item }}" state="absent"
+        with_items:
+          - "~/secure_mysql_bash.sh"
+          - "~/secure_mysql.expect"

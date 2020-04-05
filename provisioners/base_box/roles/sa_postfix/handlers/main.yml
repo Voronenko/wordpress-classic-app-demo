@@ -1,0 +1,7 @@
+---
+# handlers file for sa-postfix
+
+  - name: restart postfix
+    service: name=postfix state=restarted
+    when: docker_test is not defined
+    become: yes

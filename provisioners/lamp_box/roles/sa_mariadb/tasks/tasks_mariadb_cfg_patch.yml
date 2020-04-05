@@ -1,0 +1,17 @@
+---
+
+  - name: MariaDB | Patch basic settings /etc/mysql/my.cnf
+    lineinfile: dest=/etc/mysql/my.cnf  regexp="{{ item.regexp }}" line="{{ item.line }}" insertafter="{{ item.insertafter | default('EOF') }}"
+    with_items: "{{ mycnf_base_properties | default([]) }}"
+    notify: restart mariadb
+    become: yes
+
+  - name: MariaDB | Patch optional settings /etc/my.cnf
+    lineinfile:
+      dest: /etc/mysql/my.cnf
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      insertafter: "{{ item.insertafter | default('EOF') }}"
+    with_items: "{{ mycnf_extra_properties | default([]) }}"
+    notify: restart mariadb
+    become: yes

@@ -1,0 +1,98 @@
+---
+- hosts: www
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{playbook_dir}}"
+    - env: development
+
+    - my_mysql_databases:
+       - name: app_db
+         encoding: utf8
+         collation: utf8_general_ci
+    - my_mysql_users:
+       - name: app_user
+         host: "%"
+         password: dYud8LHBBptGN96LSn0e
+         priv: "app_db.*:ALL"
+
+
+  pre_tasks:
+    - debug: msg="Pre tasks section"
+
+    - name: ANSIBLE PYTHON | install python 2
+      raw: test -e /usr/bin/python || (apt -qqy update && apt install -qy python-minimal)
+      become: yes
+      tags:
+        - create
+
+    - name:  UNPRIVILEGED USERS | Get acl dependency (ansible unprivileged user operations magic)
+      apt: pkg="acl"
+      become: yes
+      tags:
+        - create
+
+
+    - name: gather facts
+      setup:
+      tags:
+        - always
+
+
+    - name: Include environment related variables
+      include_vars: "{{ item }}"
+      ignore_errors: true
+      with_first_found:
+       - "{{env}}_vars.yml"
+       - "local_vars.yml"
+      tags:
+        - always
+
+
+
+  roles:
+
+      - {
+          role: "sa-mysql",
+          tags: [create],
+          option_harden_mysql: true,
+          mysql_root_user: root,
+          mysql_root_password: devroot,
+          mysql_databases: "{{my_mysql_databases}}",
+          mysql_users: "{{my_mysql_users}}",
+        }
+      - {
+           role: "sa-nginx",
+           nginx_groups: ["www-data"],
+           tags: [create]
+        }
+
+      - {
+         role: "sa-php-fpm",
+         php_family: "5.6",
+         php_fpm_group: "nginx",
+         option_install_xdebug: true,
+         tags: [update]
+        }
+
+      - {
+         role: "sa-php-fpm",
+         php_family: default, # 5.6 | 7.0 | hhvm |  default
+         php_fpm_group: "nginx",
+         option_install_xdebug: true,
+         tags: [update]
+        }
+
+      - {
+         role: "sa-php-fpm",
+         php_family: hhvm, # 5.6 | 7.0 | hhvm |  default
+         php_fpm_group: "nginx",
+         tags: [update]
+        }
+
+
+  tasks:
+     - include_tasks: components/create_demo_site7.yml
+     - include_tasks: components/create_demo_site56.yml
+     - include_tasks: components/create_demo_sitehhvm.yml
+       tags: always
