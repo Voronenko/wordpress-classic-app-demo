@@ -1,0 +1,40 @@
+# sa_nginx
+box_webserver: "nginx"
+box_nginx_groups: [ "www-data" ]
+# /sa_nginx
+
+# sa_apache
+box_apache_mode: "worker" # prefork | worker
+box_apache2_disable_default: true
+box_apache_modules:
+    - rewrite
+    - ssl
+# /sa_apache
+
+# sa_php_fmp
+box_php_pool_properties:
+  - {regexp: "^[;]?php_admin_value*memory_limit*", line: "php_admin_value[memory_limit] = 98M"}
+  - {regexp: "^[;]?php_admin_value*post_max_size*", line: "php_admin_value[post_max_size] = 30M"}
+  - {regexp: "^[;]?php_admin_value*upload_max_filesize*", line: "php_admin_value[upload_max_filesize] = 10M"}
+
+box_option_install_xdebug: false
+box_php_family: "default"
+
+box_additional_php_extensions: []
+    # - "{{ php_module_prefix }}-mysql"
+    # - "{{ php_module_prefix }}-xml"
+    # - "{{ php_module_prefix }}-xmlrpc"
+    # - "{{ php_module_prefix }}-curl"
+    # - "{{ php_module_prefix }}-gd"
+    # - "{{ php_module_prefix }}-imagick"
+    # - "{{ php_module_prefix }}-cli"
+    # - "{{ php_module_prefix }}-dev"
+    # - "{{ php_module_prefix }}-mbstring"
+    # - "{{ php_module_prefix }}-opcache"
+    # - "{{ php_module_prefix }}-redis"
+    # - "{{ php_module_prefix }}-soap"
+    # - "{{ php_module_prefix }}-zip"
+# /sa_php_fpm
+
+box_project_phars: []
+

@@ -1,0 +1,21 @@
+  - name: PHP | Install custom "{{phar_config.phar}} from {{phar_config.url}}"
+    get_url:
+      url: "{{phar_config.url}}"
+      dest: "/usr/local/bin/{{phar_config.phar}}"
+    become: yes
+    tags:
+      -phar
+
+  - name: PHP | rename {{phar_config.phar}} to {{phar_config.name}}
+    shell: "mv /usr/local/bin/{{phar_config.phar}} /usr/local/bin/{{phar_config.name}}"
+    args:
+      creates: "/usr/local/bin/{{phar_config.name}}{{php_version}}"
+    become: yes
+    tags:
+      -phar
+
+  - name: PHP | creates php version specific {{phar_config.name}} invoker
+    template: src="{{role_dir}}/templates/custom/custom.j2" dest="/usr/local/bin/{{phar_config.name}}{{php_version}}" mode="u=rwx,g=rx,o=rx"
+    become: yes
+    tags:
+      -phar

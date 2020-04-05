@@ -1,0 +1,12 @@
+---
+# handlers file
+
+  - name: restart hhvm
+    action: service name=phphhvm-fpm state=restarted
+    become: yes
+    when: docker_test is not defined
+
+  - name: restart fpm
+    action: service name="php{{ php_fpm_prefix }}-fpm" state=restarted
+    become: yes
+    when: docker_test is not defined

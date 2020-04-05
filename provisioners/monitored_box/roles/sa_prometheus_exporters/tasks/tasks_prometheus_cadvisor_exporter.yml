@@ -1,0 +1,97 @@
+---
+# https://github.com/google/cadvisor/releases
+# https://github.com/google/cadvisor/releases/download/v0.27.4/cadvisor
+  - name: Set exporter facts
+    set_fact:
+      cadvisor_exporter_sub_dir: "{{ exporter_config.exporter_dir | default('cadvisor_exporter') }}"
+      cadvisor_exporter_user: "{{ exporter_config.exporter_user | default('root') }}"
+      cadvisor_exporter_group: "{{ exporter_config.exporter_group | default('root') }}"
+
+  - name: Prometheus cadvisor exporter | check if this exporter version exists
+    stat:
+      path: "{{ prometheus_exporters_dir }}/{{ cadvisor_exporter_sub_dir }}/cadvisor_exporter"
+    register: cadvisor_exporter_version_exists
+    become: yes
+    become_user: "{{ cadvisor_exporter_user }}"
+
+  - name: CAdvisor | Create dirs
+    file: path="{{ current }}"  state=directory  owner="root"  group="{{ cadvisor_exporter_group }}"   mode="u=rwx,g=rwx,o="
+    become: yes
+    with_items:
+      - "{{ prometheus_exporters_dir }}/{{ cadvisor_exporter_sub_dir }}"
+    loop_control:
+        loop_var: current
+    when: not cadvisor_exporter_version_exists.stat.exists
+    tags:
+      - prometheus
+
+  - name: CAdvisor | Download distribution
+    get_url:
+      url: "https://github.com/google/cadvisor/releases/download/v{{ prometheus_cadvisor_exporter_version }}/cadvisor"
+      dest: "{{ prometheus_exporters_dir }}/{{ cadvisor_exporter_sub_dir }}/cadvisor_exporter"
+      mode: "u=rwx,g=rx,o=rx"
+    become: yes
+    become_user: "{{ cadvisor_exporter_user }}"
+    when: not cadvisor_exporter_version_exists.stat.exists
+    tags:
+      - prometheus
+
+  - name: CAdvisor | eliminate prometheus-exporter-cadvisor service, if any (1/2)
+    service: name="prometheus-exporter-cadvisor" state="stopped"
+    become: yes
+    ignore_errors: true
+    tags:
+      - prometheus
+
+  - name: CAdvisor | eliminate prometheus-exporter-cadvisor service, if any (2/2)
+    file: path="/etc/systemd/system/prometheus-exporter-cadvisor service.service" state="absent"
+    become: yes
+    ignore_errors: true
+    tags:
+      - prometheus
+
+  - name: CAdvisor | Template startup script
+    template: src="{{ role_dir }}/templates/cadvisor.systemd.j2" dest="/etc/systemd/system/cadvisor.service"
+    when: ansible_service_mgr == "systemd"
+    become: yes
+    tags:
+      - prometheus
+
+  - block:
+
+    - name: Detect start-stop-daemon
+      shell: type start-stop-daemon
+      register: startstop_exists
+      changed_when: False
+      ignore_errors: true
+      tags:
+        - skip_ansible_lint
+
+    - name: CAdvisor | Template startup script
+      template: src="{{ role_dir }}/templates/cadvisor.amzn.j2" dest="/etc/init/cadvisor.conf"
+      become: yes
+      tags:
+        - prometheus
+
+    - name: CAdvisor | Template startup script
+      template: src="{{ role_dir }}/templates/cadvisor.upstart.j2" dest="/etc/init/cadvisor.conf"
+      when: startstop_exists is failed
+      become: yes
+      tags:
+        - prometheus
+
+    when: ansible_service_mgr == "upstart" and cadvisor_exists is failed
+
+  - name: CAdvisor | Ensure service started
+    service: name="cadvisor" state="started" enabled="yes"
+    when: docker_test is not defined and ansible_service_mgr == "upstart"
+    become: yes
+    tags:
+      - prometheus
+
+  - name: CAdvisor | Ensure service started
+    systemd: name="cadvisor" state="started" enabled="yes" daemon-reload="yes"
+    when: docker_test is not defined and ansible_service_mgr == "systemd"
+    become: yes
+    tags:
+      - prometheus

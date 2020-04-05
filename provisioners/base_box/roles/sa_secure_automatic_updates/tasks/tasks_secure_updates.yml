@@ -1,0 +1,96 @@
+---
+  - include_tasks: __detect_init_system.yml
+
+  - name: Automatic Security Updates | Configure unattended-upgrades
+    template:
+      src:   "{{ role_dir }}/templates/security/{{ item }}.j2"
+      dest:  "/etc/apt/apt.conf.d/{{ item }}"
+      owner: "root"
+      group: "root"
+      mode:  "0644"
+      force: yes
+    with_items:
+      - 10periodic
+      - 50unattended-upgrades
+    become: yes
+    tags:
+      - securityupdates
+
+  - name: Automatic Security Updates | | Patch basic settings /etc/apt/apt.conf.d/50unattended-upgrades
+    lineinfile:
+       dest: /etc/apt/apt.conf.d/50unattended-upgrades
+       regexp: "{{ item.regexp }}"
+       line: "{{ item.line }}"
+       insertafter: "{{ item.insertafter | default('EOF') }}"
+    with_items: "{{ unattended_properties | default([]) }}"
+    become: yes
+    tags:
+      - securityupdates
+
+  - name: Automatic Security Updates | | Patch extra settings /etc/apt/apt.conf.d/50unattended-upgrades
+    lineinfile:
+       dest: /etc/apt/apt.conf.d/50unattended-upgrades
+       regexp: "{{ item.regexp }}"
+       line: "{{ item.line }}"
+       insertafter: "{{ item.insertafter | default('EOF') }}"
+    with_items: "{{ unattended_properties_extra | default([]) }}"
+    become: yes
+    tags:
+      - securityupdates
+
+  - block: #classic way via unattended-upgrades
+
+    - name: Automatic Security Updates | Install dependencies
+      apt: pkg="unattended-upgrades"
+      become: yes
+      tags:
+        - securityupdates
+
+    - name: Automatic Security Updates |  update-notifier-common
+      apt:
+        name: update-notifier-common
+        state: present
+      become: true
+      ignore_errors: true
+
+    when: (upstart_system == "upstart") and (docker_test is not defined)
+
+  - block: #systemd way
+
+    - name: Automatic Security Updates | Make unattended upgrades run on {{ unattended_allow_reboot_time }} | Create systemd override directory
+      file:
+        path: "/etc/systemd/system/apt-daily.timer.d/"
+        owner: "root"
+        group: "root"
+        mode: "0755"
+        recurse: yes
+        state: directory
+      become: yes
+      tags:
+        - securityupdates
+
+
+    - name:  Automatic Security Updates | Make unattended upgrades run on {{ unattended_allow_reboot_time }} | Copy override template
+      template:
+        src:   "{{ role_dir }}/templates/security/apt-daily-timer-d-override.conf.j2"
+        dest:  "/etc/systemd/system/apt-daily.timer.d/override.conf"
+        owner: "root"
+        group: "root"
+        mode:  "0644"
+        force: yes
+      become: yes
+      tags:
+        - securityupdates
+
+    - name:  Automatic Security Updates | Re-read systemd configuration
+      systemd: daemon_reload=yes
+      become: yes
+      tags:
+        - securityupdates
+
+    - name:  Automatic Security Updates | Restart apt-daily.timer
+      service: name="apt-daily.timer" state=restarted
+      become: yes
+      tags:
+        - securityupdates
+    when: (upstart_system == "systemd") and (docker_test is not defined)

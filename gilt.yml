@@ -1,0 +1,65 @@
+  - git: https://github.com/oops-to-devops/base_box
+    version: 0.7.0
+    files:
+      - src: roles
+        dst: provisioners/base_box/roles
+      - src: Makefile
+        dst: provisioners/base_box/Makefile
+      - src: "*.yml"
+        dst: provisioners/base_box
+      - src: "*.sh"
+        dst: provisioners/base_box
+      - src: "*.txt"
+        dst: provisioners/base_box
+  - git: https://github.com/oops-to-devops/mariadb_box.git
+    version: 0.3.0
+    files:
+      - src: roles
+        dst: provisioners/mariadb_box/roles
+      - src: Makefile
+        dst: provisioners/mariadb_box/Makefile
+      - src: "*.yml"
+        dst: provisioners/mariadb_box
+      - src: "*.sh"
+        dst: provisioners/mariadb_box
+      - src: "*.txt"
+        dst: provisioners/mariadb_box
+  - git: https://github.com/oops-to-devops/lamp_box.git
+    version: 0.4.0
+    files:
+      - src: roles
+        dst: provisioners/lamp_box/roles
+      - src: Makefile
+        dst: provisioners/lamp_box/Makefile
+      - src: "*.yml"
+        dst: provisioners/lamp_box
+      - src: "*.sh"
+        dst: provisioners/lamp_box
+      - src: "*.txt"
+        dst: provisioners/lamp_box
+#  - git: https://github.com/oops-to-devops/letsencrypted_box.git
+#    version: develop
+#    files:
+#      - src: roles
+#        dst: provisioners/letsencrypted_box/roles
+#      - src: Makefile
+#        dst: provisioners/letsencrypted_box/Makefile
+#      - src: "*.yml"
+#        dst: provisioners/letsencrypted_box
+#      - src: "*.sh"
+#        dst: provisioners/letsencrypted_box
+#      - src: "*.txt"
+#        dst: provisioners/letsencrypted_box
+  - git: https://github.com/oops-to-devops/monitored_box.git
+    version: 0.3.0
+    files:
+      - src: roles
+        dst: provisioners/monitored_box/roles
+      - src: Makefile
+        dst: provisioners/monitored_box/Makefile
+      - src: "*.yml"
+        dst: provisioners/monitored_box
+      - src: "*.sh"
+        dst: provisioners/monitored_box
+      - src: "*.txt"
+        dst: provisioners/monitored_box

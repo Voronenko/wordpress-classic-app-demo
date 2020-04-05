@@ -1,0 +1,54 @@
+---
+  - name: FirewallD | Enable it
+    service: name="firewalld" state=restarted enabled="yes"
+    become: yes
+    tags:
+      - firewalld
+
+  - name: FirewallD | Configure incoming/outgoing defaults
+    template: src="{{ role_dir }}/templates/firewalld/zone_public.xml.j2" dest="/etc/firewalld/zones/public.xml"
+    become: yes
+    tags:
+      - firewalld
+
+  - name: FirewallD | Configure rules to allow incoming traffic
+    firewalld:
+      rich_rule: 'rule port port="{{ item.port }}" protocol="{{ item.proto }}" accept'
+      permanent: true
+      state: enabled
+    with_items: "{{ ufw_rules_allow | default([]) }}"
+    when: ufw_rules_allow is defined
+    become: yes
+    tags:
+      - firewalld
+
+  - name: FirewallD | Configure rules to allow incoming traffic from specific hosts
+    firewalld:
+      rich_rule: 'rule port port="{{ item.port }}" protocol="{{ item.proto }}" source address="{{ item.address }}" accept'
+      permanent: true
+      state: enabled
+    with_items: "{{ ufw_rules_allow_from_hosts | default([]) }}"
+    when: ufw_rules_allow_from_hosts is defined
+    become: yes
+    tags:
+      - firewalld
+
+  - name: FirewallD | White list hosts
+    firewalld:
+      rich_rule: 'rule family="ipv4" source address="{{ item }}" accept'
+      permanent: true
+      state: enabled
+      src: '{{ item }}'
+    with_items: "{{ whitelistedips | default([]) }}"
+    become: yes
+    tags:
+      - ufw
+
+
+  - name: FirewallD | Reload
+    shell: firewall-cmd --reload
+    changed_when: False
+    become: yes
+    tags:
+      - firewalld
+      - skip_ansible_lint

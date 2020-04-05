@@ -1,0 +1,26 @@
+- hosts: wordpress_box
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+
+
+  vars_files:
+    - ./playbook_vars.yml
+
+
+  pre_tasks:
+
+    - debug: msg="Wordpress box components play"
+
+
+- name: Apply lamp box play
+  import_playbook: provisioners/lamp_box/playbook.yml
+
+- name: Apply mariadb box play
+  import_playbook: provisioners/mariadb_box/playbook.yml
+
+- name: Apply monitored box play
+  import_playbook: provisioners/monitored_box/playbook.yml
+

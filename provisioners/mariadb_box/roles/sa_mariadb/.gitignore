@@ -1,0 +1,4 @@
+box-example/roles
+.idea
+*.pyc
+**/__pycache__/

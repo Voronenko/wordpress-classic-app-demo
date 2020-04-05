@@ -1,0 +1,3 @@
+---
+# tasks file for sa-include
+  - include: "{{include_file}}"

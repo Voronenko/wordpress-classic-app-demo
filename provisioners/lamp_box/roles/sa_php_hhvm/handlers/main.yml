@@ -1,0 +1,7 @@
+---
+# handlers file
+
+  - name: restart hhvm
+    action: service name=phphhvm-fpm state=restarted enabled=yes
+    become: yes
+    when: docker_test is not defined

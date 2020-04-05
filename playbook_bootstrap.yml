@@ -1,0 +1,20 @@
+- hosts: wordpress_box
+  gather_facts: False
+
+  vars:
+    - root_dir: "{{ playbook_dir }}"
+    - shared_dir: "{{ playbook_dir }}/../shared"
+
+
+  vars_files:
+    - ./playbook_vars.yml
+
+
+  pre_tasks:
+
+    - debug: msg="Wordpress box bootstrap play"
+
+
+- name: Apply bootstrap box play
+  import_playbook: provisioners/base_box/playbook.yml
+

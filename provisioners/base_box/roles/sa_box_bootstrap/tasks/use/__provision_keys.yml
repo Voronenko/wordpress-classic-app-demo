@@ -1,0 +1,25 @@
+---
+  - name: .SSH | Provision private key to remote
+    copy:
+      src: "{{ deploy_user_key }}"
+      dest: "~/.ssh/id_rsa"
+      owner: "{{ deploy_user | default(ansible_user_id) }}"
+      mode: 0400
+    when: deploy_user_key is defined
+    become: yes
+    become_user: "{{ deploy_user | default(ansible_user_id) }}"
+
+  - name: .SSH | Provision public key to remote
+    copy:
+      src: "{{ deploy_user_pub_key }}"
+      dest: "~/.ssh/id_rsa.pub"
+      owner: "{{ deploy_user | default(ansible_user_id) }}"
+      mode: 0400
+    when: deploy_user_pub_key is defined
+    become: yes
+    become_user: "{{ deploy_user | default(ansible_user_id) }}"
+
+  - name: .SSH | Authorize keys
+    authorized_key: user={{ deploy_user | default(ansible_user_id) }} key="{{ lookup('file', item) }}"
+    with_items: "{{ deploy_user_authorized_keys | default([]) }}"
+    become: yes

@@ -1,0 +1,142 @@
+---
+# tasks file for sa-box-bootstrap
+  - debug: msg="================ 'option_ufw' renamed to option_firewall ================ "
+    when: option_ufw is defined
+
+
+  - debug:
+      msg: >
+        Trying to use defaults {{ (override_os_family is defined)
+        | ternary(override_os_family,ansible_os_family) | lower }}.yml
+        with distribution tasks {{ (override_os_family is defined)
+        | ternary(override_os_family,ansible_os_family) | lower }}.yml
+
+  - name: Try to include distribution specific vars
+    include_vars: "{{ item }}"
+    with_first_found:
+      - files:
+          - "{{ role_dir }}/defaults/{{ (override_os_family is defined) | ternary(override_os_family,ansible_os_family) | lower }}.yml"
+        skip: true
+    tags:
+      - skip_ansible_lint
+
+  - include: "{{ item }}"
+    with_first_found:
+      - files:
+          - "distribution_tasks/{{ (override_os_family is defined) | ternary(override_os_family,ansible_os_family) | lower }}.yml"
+        skip: true
+    tags:
+      - skip_ansible_lint
+
+
+  - block:
+
+    - name: Bootstrap | check apt last update
+      stat: path=/var/cache/apt
+      register: apt_cache_stat
+      become: yes
+
+    - name: Bootstrap | update apt if needed
+      apt: update_cache=yes
+      when: ansible_date_time.epoch|float - apt_cache_stat.stat.mtime > 60*60*12
+      become: yes
+      tags:
+        - skip_ansible_lint
+
+    when: ansible_os_family == "Debian"
+
+  - name: Bootstrap | Sets correctly hostname
+    lineinfile: dest=/etc/hosts line="127.0.0.1 {{ hostname }}"
+    become: yes
+
+  - name: Bootstrap | Sets correctly hostname
+    shell: hostname {{ hostname }}
+    ignore_errors: true
+    become: yes
+    tags:
+      - skip_ansible_lint
+
+  - name: Bootstrap | remove domain from hostname, if it was passed like full domain
+    lineinfile:
+      dest:     /etc/hostname
+      regexp:   "^[A-Za-z]*.*"
+      line:     "{{ hostname }}"
+    become: yes
+
+  - name: Bootstrap | set default timezone to {{ timezone }}
+    timezone:
+      name: "{{ timezone | default('UTC') }}"
+    become: yes
+
+  - name: Bootstrap | reconfigure timezone data
+    command: dpkg-reconfigure -f noninteractive tzdata
+    when: ansible_os_family == "Debian"
+    become: yes
+
+  - name: Bootstrap | address cloud-init - change 127.0.1.1 to real eth0 IP address
+    lineinfile:
+      dest:     /etc/hosts
+      regexp:   '^127\.0\.1\.1(.*)$'
+      line:     'ansible_eth0.ipv4.address\1'
+      backrefs: yes
+    become: yes
+
+  - include: "tasks_{{ firewall_type }}.yml"
+    when: option_firewall
+
+  - include: "tasks_monit.yml"
+    when: option_monit
+
+  - debug: msg="About to create deployment user {{ deploy_user }}"
+
+  - name: Deploy user is sudoer with password
+    set_fact:
+      deploy_user_actual_pass: "{{ deploy_user_sudo_password }}"
+    when: deploy_user_sudo_password is defined and not option_skip_deploy_sudo_password | default(false)
+
+  - include_tasks: use/__create_deploy_user.yml
+    vars:
+      theuser: "{{ deploy_user }}"
+      thegroup: "{{ deploy_user }}"
+      home: "/home/{{ deploy_user }}"
+      thepassword: "{{ deploy_user_actual_pass | default(omit) }}"
+    when: option_create_deploy_user and deploy_user is defined
+
+  - include: "use/__provision_keys.yml"
+    when: option_inject_keys
+
+  - name: SSH | Authorize keys
+    authorized_key: user={{ deploy_user }} key="{{ lookup('file', item) }}"
+    when: deploy_user_authorized_keys is defined
+    with_items: "{{ deploy_user_authorized_keys | default([]) }}"
+    become: yes
+
+  - name: Sanity check to prevent box lockdown
+    fail:
+      msg: >
+        If you enforce SSH key security - it is obligatory to provide at least one authorized key
+        in deploy_user_authorized_keys
+    when: >
+      option_enforce_ssh_keys_login and
+      ( deploy_user_authorized_keys is not defined or deploy_user_authorized_keys|length == 0 )
+
+  - name: SSH | Enforce SSH keys security
+    lineinfile:
+      dest: /etc/ssh/sshd_config
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      insertafter: "{{ item.insertafter | default('EOF') }}"
+    with_items: "{{ sshd_config_lines | default([]) }}"
+    when: option_enforce_ssh_keys_login
+    become: yes
+    tags: ssh
+
+  - name: SSH | Turn file2ban on
+    include: "tasks_fail2ban.yml"
+    when: option_file2ban
+
+  - name: SSH | Restart SSHD
+    service: name=sshd state=restarted
+    when: option_enforce_ssh_keys_login and docker_test is not defined
+    become: yes
+    tags: ssh

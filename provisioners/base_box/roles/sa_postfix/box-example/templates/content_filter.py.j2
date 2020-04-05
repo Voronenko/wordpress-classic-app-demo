@@ -1,0 +1,82 @@
+#!/usr/bin/env python3
+# vim: fileencoding=utf-8 tw=100 expandtab ts=4 sw=4 :
+
+import sys
+import subprocess
+from email.parser import Parser
+from email.utils import parseaddr, formataddr
+
+
+# ---
+# Custom filter
+# ---
+
+
+# This header is added to all mails to avoid processing the same email twice. Your postfix
+# configuration should at all times prevent this from happening, as messages going through filters
+# are removed from the queue and not sent. However, if by accident it happened, then this prevents
+# postfix from going in a crazy infinite loop.
+BRANDING_HEADER = 'X-Fix-From'
+
+
+def apply_filter(frm, to, content):
+    # TODO: write your filter in here
+    return frm, to, content
+
+
+# ---
+# Boilerplate code
+# ---
+
+
+EX_TEMPFAIL = 75
+EX_UNAVAILABLE = 69
+
+
+def parse_args():
+    try:
+        cli_from = sys.argv[1].lower()
+        cli_to = [x.lower() for x in sys.argv[2:]]
+    except IndexError:
+        sys.exit(EX_UNAVAILABLE)
+    else:
+        return cli_from, cli_to
+
+
+def get_content():
+    content = ''.join(sys.stdin.readlines())
+    return Parser().parsestr(content)
+
+
+def re_inject(frm, to, content):
+    if BRANDING_HEADER in content:
+        return True
+
+    content[BRANDING_HEADER] = 'yes'
+
+    p = subprocess.Popen(
+        ['/usr/sbin/sendmail', '-G', '-i', '-f', frm] + to,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+    p.communicate(content.as_bytes())
+    ret = p.wait()
+
+    if ret == 0:
+        return True
+
+    return False
+
+
+def main():
+    frm, to = parse_args()
+    content = get_content()
+
+    if not re_inject(*apply_filter(frm, to, content)):
+        sys.exit(EX_TEMPFAIL)
+
+
+if __name__ == '__main__':
+    main()

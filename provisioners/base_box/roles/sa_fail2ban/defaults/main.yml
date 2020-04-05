@@ -1,0 +1,9 @@
+---
+# defaults file for sa-fail2ban
+
+role_dir: "{{role_path}}"
+
+file2ban_action: "hostsdeny[file=/etc/hosts.deny]"  # ufw
+file2ban_ban_time: 900 # 15 min per SMIG recommendations
+
+file2ban_jaillocal_template: "{{role_dir}}/templates/jail.local.j2"

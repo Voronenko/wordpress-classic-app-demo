@@ -1,0 +1,35 @@
+---
+# defaults file for sa-postfix
+
+role_dir: "{{role_path}}"
+
+option_postfix_content_filtering: false
+
+postfix_hostname: "{{ansible_hostname}}"
+postfix_domain: "{{postfix_hostname}}"
+
+#http://www.postfix.org/STANDARD_CONFIGURATION_README.html#null_client
+
+postfix_default_properties: []
+
+postfix_null_client_properties:
+    - {regexp: "^myhostname =*", line: "myhostname = {{postfix_hostname}}"}
+    - {regexp: "^myorigin =*", line: "myorigin = $mydomain"}
+    - {regexp: "^relayhost =*", line: "relayhost = $mydomain"}
+    - {regexp: "^inet_interfaces =*", line: "inet_interfaces = loopback-only"}
+    - {regexp: "^mydestination =*", line: "mydestination = loopback-only"}
+    - {regexp: "^smtpd_client_restrictions =*", line: "smtpd_client_restrictions = permit_mynetworks, reject"}
+
+postfix_self_client_properties:
+    - {regexp: "^myhostname =*", line: "myhostname = {{postfix_hostname}}"}
+    - {regexp: "^myorigin =*", line: "myorigin = $mydomain"}
+    - {regexp: "^relayhost =*", line: "relayhost = "}
+    - {regexp: "^inet_interfaces =*", line: "inet_interfaces = loopback-only"}
+    - {regexp: "^mydestination =*", line: "mydestination = loopback-only"}
+    - {regexp: "^mydomain =*", line: "mydomain = {{postfix_domain}}"}
+    - {regexp: "^smtpd_client_restrictions =*", line: "smtpd_client_restrictions = permit_mynetworks, reject"}
+
+
+
+
+postfix_properties: "{{postfix_self_client_properties}}"

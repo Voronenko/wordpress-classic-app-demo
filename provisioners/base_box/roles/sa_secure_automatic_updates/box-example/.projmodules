@@ -1,0 +1,4 @@
+[submodule "roles/sa-secure-automatic-updates"]
+        path = roles/sa-secure-automatic-updates
+        url = https://github.com/softasap/sa-secure-automatic-updates.git
+

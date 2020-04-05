@@ -1,0 +1,13 @@
+---
+# tasks file for sa-php-fpm
+  - import_tasks: php_switchversion.yml
+
+  - include_tasks: "phpfpm{{ php_version }}/main.yml"
+
+  - include_tasks: tasks_xdebug.yml
+    when: option_install_xdebug
+
+  - include_tasks: "php_additional_extensions.yml"
+
+  - include_tasks: tasks_composer.yml
+    when: option_install_composer

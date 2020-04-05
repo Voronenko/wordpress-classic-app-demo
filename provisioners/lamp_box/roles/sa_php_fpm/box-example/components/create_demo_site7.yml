@@ -1,0 +1,17 @@
+---
+  - name: Create demo site folder
+    file: path="/var/www/demo7" state="directory"
+    become: yes
+
+  - name: Push demo site contents
+    synchronize: src="{{root_dir}}/files/demosite/" dest="/var/www/demo7"
+    become: yes
+
+  - name: Template demosite nginx config
+    template: src="{{root_dir}}/templates/nginx/site7.conf.j2" dest="/etc/nginx/sites-enabled/site7.conf"
+    dest: /var/www/demo7
+    become: yes
+
+  - name: Restart nginx
+    service: name="nginx" state="restarted"
+    become: yes

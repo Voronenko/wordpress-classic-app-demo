@@ -1,0 +1,25 @@
+
+- name: EPEL | Check if configured
+  command: test -e /etc/yum.repos.d/epel.repo
+  become: yes
+  changed_when: False
+  register: epel_exists
+  ignore_errors: true
+
+- name: EPEL | Ensure EPEL repo.
+  yum: name="https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm" state=present
+  register: epel_install_result
+  until: '"failed" not in epel_install_result or "is already installed" in epel_install_result'
+  failed_when: '"failed" in epel_install_result'
+  retries: 5
+  delay: 10
+  become: yes
+# todo
+  ignore_errors: true
+  when: epel_exists is failed
+
+- name: Import EPEL GPG key.
+  rpm_key:
+    key: "/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}"
+    state: present
+  when: epel_exists is failed

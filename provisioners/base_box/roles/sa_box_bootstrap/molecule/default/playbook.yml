@@ -1,0 +1,29 @@
+---
+- name: Converge
+  hosts: all
+
+  pre_tasks:
+    - debug: msg="Pre tasks section for {{ansible_host}}"
+
+    - set_fact:
+        remote_ip_address: "{{ ansible_host }}"
+
+    - include_vars: "playbook_vars.yml"
+
+  roles:
+     - {
+        role: "sa-box-bootstrap",
+        deploy_user: "{{box_deploy_user}}",
+        deploy_user_authorized_keys: "{{box_deploy_authorized_keys}}",
+        deploy_user_sudo_password: "{{box_deploy_pass | password_hash('sha512')}}",
+        option_skip_deploy_sudo_password: "{{True if (box_deploy_pass == \"\") else False}}",
+        ufw_rules_allow_from_hosts: "{{box_ufw_rules_allow_from_hosts}}",
+        hostname: "{{targethost | default(ansible_hostname)}}",
+        timezone: "Europe/Kiev",
+
+        option_copy_initial_authorized_keys: true,
+        option_enforce_ssh_keys_login: false,
+        option_file2ban: true,
+        option_ufw: true,
+        option_monit: true
+       }

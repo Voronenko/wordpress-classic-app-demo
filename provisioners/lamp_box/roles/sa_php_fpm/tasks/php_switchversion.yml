@@ -1,0 +1,71 @@
+  - name: PHP | Fix php family prefix for 7.3
+    set_fact:
+      php_version: "7.3"
+      php_module_prefix: "php7.3"
+      php_fpm_prefix: "php7.3"
+    when: php_family == "7.3" or php_family == 7.3
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Fix php family prefix for 7.2
+    set_fact:
+      php_version: "7.2"
+      php_module_prefix: "php7.2"
+      php_fpm_prefix: "php7.2"
+    when: php_family == "default" or php_family == "7.2" or php_family == 7.2
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Fix php family prefix for 7.1
+    set_fact:
+      php_version: "7.1"
+      php_module_prefix: "php7.1"
+      php_fpm_prefix: "php7.1"
+    when: php_family == "7.1" or php_family == 7.1
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Fix php family prefix for 7.0
+    set_fact:
+      php_version: "7.0"
+      php_module_prefix: "php7.0"
+      php_fpm_prefix: "php7.0"
+    when: php_family == "7.0" or php_family == 7  or (php_family == "default" and ansible_distribution_release in ["xenial"])
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Fix php family prefix for 5.6
+    set_fact:
+      php_version: "5.6"
+      php_module_prefix: "php5.6"
+      php_fpm_prefix: "php5.6"
+    when: php_family == "5.6" or php_family == 5.6 or (php_family == "default" and ansible_distribution_release in ["trusty"])
+
+  - name: PHP | Fix php family prefix for hvvm
+    set_fact:
+      php_version: hhvm
+    when: php_family == "hhvm"
+
+  - name: PHP | Add ppa ondrej/php apt repository for php 7
+    apt_repository: repo='ppa:ondrej/php'
+    when: php_family in [7, 7.0, "7", "7.0", 7.1, "7.1", 7.2, "7.2", 7.3, "7.3"]
+    become: yes
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Add apt repository for php 5.6
+    apt_repository: repo='ppa:ondrej/php'
+    when: php_family == "5.6" or php_family == 5.6 or (php_family == "default" and ansible_distribution_release in ["trusty"])
+    become: yes
+    tags:
+      -php
+      -setup
+
+  - name: PHP | Default platform provided repository is used
+    debug: msg="Default platform available debs will be used for php."
+    when: (php_family is not defined) or (php_family == "default")

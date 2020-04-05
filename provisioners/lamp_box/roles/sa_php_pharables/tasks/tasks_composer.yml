@@ -1,0 +1,27 @@
+  - name: PHP | Install dependencies
+    package: name=curl
+    become: yes
+    tags:
+      -composer
+
+  - name: PHP | Install composer
+    shell: "curl -sS https://getcomposer.org/installer | /usr/bin/php{{ php_version }} -- --install-dir=/usr/local/bin"
+    args:
+      creates: "/usr/local/bin/composer{{ php_version }}"
+    become: yes
+    tags:
+      -composer
+
+  - name: PHP | rename composer.phar to composer
+    shell: "mv /usr/local/bin/composer.phar /usr/local/bin/composer"
+    args:
+      creates: "/usr/local/bin/composer{{ php_version }}"
+    become: yes
+    tags:
+      -composer
+
+  - name: PHP | creates php version specific composer invoker
+    template: src="{{ role_dir }}/templates/composer/composer.j2" dest="/usr/local/bin/composer{{ php_version }}" mode="u=rwx,g=rx,o=rx"
+    become: yes
+    tags:
+      -composer

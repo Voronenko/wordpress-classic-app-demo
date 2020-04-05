@@ -1,0 +1,4 @@
+[submodule "roles/sa-nginx"]
+        path = roles/sa-nginx
+        url = https://github.com/softasap/sa-nginx.git
+

@@ -1,0 +1,4 @@
+[submodule "roles/sa-file2ban"]
+        path = roles/sa-file2ban
+        url = https://github.com/softasap/sa-file2ban.git
+

@@ -1,0 +1,7 @@
+---
+# handlers file for sa-mariadb
+
+  - name: restart mariadb
+    service: name=mysql state=restarted
+    become: yes
+    when: docker_test is not defined

@@ -1,0 +1,64 @@
+---
+# defaults file for vs-box-bootstrap
+  root_dir: "{{ role_path }}"
+  role_dir: "{{ role_path }}"
+
+# timezone: "Europe/Kiev"
+
+  hostname: "{{ ansible_host_name | default(ansible_nodename) }}"
+
+  option_create_deploy_user: true
+
+  option_inject_keys: true
+  option_copy_initial_authorized_keys: true
+
+  option_enforce_ssh_keys_login: true
+  option_file2ban: true
+  option_firewall: "{{ option_ufw | default(true) }}"
+  option_monit: true
+
+  deploy_user_sudo_password_empty: "{{ '' | password_hash('sha512') }}"
+  deploy_user_sudo_password_null: "$6$TS8F9qqukLyFViZW$dRslNT3QbNNDGpvz7acK0y4qbuIDQeVRor/C527Y3SDbJWozaJ78UM//Up77PErdiM4qxbCsAckUqTXPxp1ra/"
+
+  monit_version: "5.23.0-2" # "5.14-2" for 14.04
+
+  ufw_rules_default:
+    - {
+        policy: deny,
+        direction: incoming
+      }
+    - {
+        policy: allow,
+        direction: outgoing
+      }
+
+  ufw_rules_allow:
+    - {
+        port: 80,
+        proto: tcp
+       }
+    - {
+        port: 443,
+        proto: tcp
+      }
+    - {
+        port: 22,
+        proto: tcp
+       }
+
+  ufw_rules_allow_from_hosts: []
+    # - {
+    #     port: 22,
+    #     proto: tcp,
+    #     address: "192.168.0.0/16"
+    #    }
+
+
+  sshd_config_lines:
+    - {regexp: "^Protocol.*", line: "Protocol 2"}
+    - {regexp: "^PermitRootLogin.*", line: "PermitRootLogin no"}
+    - {regexp: "^RSAAuthentication.*", line: "RSAAuthentication yes"}
+    - {regexp: "^PubkeyAuthentication.*", line: "PubkeyAuthentication yes"}
+    - {regexp: "^ChallengeResponseAuthentication.*", line: "ChallengeResponseAuthentication no"}
+    - {regexp: "^PasswordAuthentication.*", line: "PasswordAuthentication no"}
+    - {regexp: "^MaxAuthTries.*", line: "MaxAuthTries 3"}

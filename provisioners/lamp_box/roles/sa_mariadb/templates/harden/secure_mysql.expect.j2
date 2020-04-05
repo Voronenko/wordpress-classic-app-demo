@@ -1,0 +1,26 @@
+#!/usr/bin/expect -f
+#
+
+set timeout -1
+spawn $env(SHELL)
+match_max 100000
+expect -exact "Enter current password for root (enter for none):"
+send -- "{{mysql_root_password}}\r"
+expect {
+ -ex "VALIDATE PASSWORD PLUGIN can be used to test passwords" {
+        send "n\n";
+        exp_continue;
+       }
+ timeout { puts "No install validation plugin proposal. Mysql less than 5.7." }
+}
+expect -exact "Change the root password? \[Y/n\]"
+send -- "n\r"
+expect -exact "Remove anonymous users? \[Y/n\] "
+send -- "y\r"
+expect -exact "Disallow root login remotely? \[Y/n\] "
+send -- "y\r"
+expect -exact "Remove test database and access to it? \[Y/n\] "
+send -- "y\r"
+expect -exact "Reload privilege tables now? \[Y/n\] "
+send -- "y\r"
+expect -exact " ... Success!\r"
