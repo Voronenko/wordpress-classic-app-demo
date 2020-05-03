@@ -5,6 +5,8 @@
 
 # lamp-wp-box overrides
 
+application_php_version: 7.0
+
 application_db_name: wordpress
 application_db_user: wordpress
 application_db_password: wordpress1

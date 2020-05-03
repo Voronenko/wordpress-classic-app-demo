@@ -11,6 +11,6 @@ all: # keys must be unique, i.e. only one 'hosts' per group
         lamp_box:
             hosts:
                 wordpress:
-        application_box:
+        wordpress_box:
             hosts:
                 wordpress:

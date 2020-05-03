@@ -60,6 +60,6 @@
       - src: "*.yml"
         dst: deployment/provisioners/monitored_box
       - src: "*.sh"
-        dst: provisioners/monitored_box
+        dst: deployment/provisioners/monitored_box
       - src: "*.txt"
-        dst: provisioners/monitored_box
+        dst: deployment/provisioners/monitored_box
