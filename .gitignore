@@ -1,16 +1,68 @@
-.venv
-p-env
-*.retry
-.envrc
-.idea
-*/**/.terraform
-local_*.sh
-releases
-__pycache__
-*.pyc
-roles/**/box-example
-roles/**/molecule
-roles/**/tests/
-roles/**/meta
-roles/**/.travis.yml
+# Thanks to: https://gist.github.com/jdbartlett/444295
 
+# Ignore everything in the root except the "wp-content" directory.
+*.retry
+*/**/roles/sa-*
+.vagrant
+build
+*.tgz
+*.log
+/index.php
+/wp-*.php
+/wp-admin/*
+/wp-includes/*
+license.txt
+xmlrpc.php
+*150x*.*
+*200x*.*
+*225x*.*
+*240x*.*
+*248x*.*
+*251x*.*
+*255x*.*
+*260x*.*
+*264x*.*
+*265x*.*
+*268x*.*
+*269x*.*
+*288x*.*
+*293x*.*
+*300x*.*
+*660x*.*
+*768x*.*
+*818x*.*
+*846x*.*
+*858x*.*
+*879x*.*
+*887x*.*
+*902x*.*
+*920x*.*
+*983x*.*
+*1024x*.*
+*1920x*.*
+
+!/version.txt
+!.gitignore
+!/*.sh
+!/*.md
+!/*.ht*
+!wp-config.php.example
+!wp-content/
+!deployment/
+!Makefile
+
+# Ignore everything in the "wp-content" directory, except the "plugins" and "themes" directories.
+wp-content/*
+!wp-content/plugins/
+!wp-content/themes/
+ 
+# Ignore everything in the "plugins" directory, except the plugins you specify
+wp-content/plugins/*
+# !wp-content/plugins/my-single-file-plugin.php
+# !wp-content/plugins/my-directory-plugin/
+ 
+# Ignore everything in the "themes" directory, except the themes you specify
+wp-content/themes/*
+!wp-content/themes/index.php
+wp-cli.phar
+readme.html
