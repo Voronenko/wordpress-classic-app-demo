@@ -1,3 +1,0 @@
-[submodule "roles/sa-box-bootstrap"]
-        path = roles/sa-box-bootstrap
-        url = https://github.com/softasap/sa-box-bootstrap.git

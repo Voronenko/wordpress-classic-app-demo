@@ -1,8 +1,0 @@
----
-- hosts: all
-  roles:
-    - {
-        role: "role_under_test",
-        docker_test: true,
-        option_postfix_content_filtering: true
-      }

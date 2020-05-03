@@ -1,7 +1,7 @@
 # Demo:  using ansible and terraform to deploy wordpress application
 
 In this demo from oops-to-devops services  https://github.com/topics/oops-to-devops we provide
-example, how ansible and terraform flows might be splitted between infrastructure deployment 
+example, how ansible and terraform flows might be splitted between infrastructure deployment
 and business logic deployment.
 
 

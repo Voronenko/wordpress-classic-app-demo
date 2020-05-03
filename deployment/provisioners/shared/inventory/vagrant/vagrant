@@ -1,0 +1,16 @@
+---
+all: # keys must be unique, i.e. only one 'hosts' per group
+    hosts:
+        wordpress:
+            ansible_host: 192.168.57.201
+            ansible_ssh_user: vagrant
+    children:
+        base_box:
+            hosts:
+                wordpress:
+        lamp_box:
+            hosts:
+                wordpress:
+        wordpress_box:
+            hosts:
+                wordpress:
